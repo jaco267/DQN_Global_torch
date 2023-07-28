@@ -1,0 +1,7 @@
+model/*
+model_20/*
+train_data_/*
+train_data_20/
+solutionsDRL*/
+test_data_/*
+wandb/*

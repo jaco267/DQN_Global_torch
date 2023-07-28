@@ -1,0 +1,1 @@
+from BenchmarkGenerator.main import main_fn
