@@ -87,7 +87,7 @@ def init_weights(module):
         module.bias.data.zero_()
         module.weight.data.fill_(1.0)
 class QNetwork(nn.Module):
-  def __init__(self,obs_size,action_size,embed_dim = 128,context_len=50,num_heads=8): #* 128 is a little too large...
+  def __init__(self,obs_size,action_size,embed_dim = 128,context_len=5,num_heads=8): #* 128 is a little too large...
     super().__init__()
     # lay = [32,64,32]
     self.position_embedding = nn.Parameter(tc.zeros(1,context_len,embed_dim),requires_grad=True)
@@ -197,9 +197,7 @@ class PrioritizedReplayBuffer(ReplayBuffer):
           tree_capacity *= 2
       self.sum_tree=SumSegmentTree(tree_capacity)#*find sum in any segment with O(logN),(not N)
       self.min_tree = MinSegmentTree(tree_capacity)#*find min in any segment in O(logN) 
-      #todo 
-      self.episode_avg_priority = 0
-      # self.
+
       #todo print self.episode_length
   def store(self, obs: np.ndarray, act: int, rew: float, done: bool, episode_len):
       """Store experience and priority."""
@@ -266,7 +264,8 @@ class PrioritizedReplayBuffer(ReplayBuffer):
       w_i = (1/N* 1/P(i))**beta #?? and then it normalize it ???
       """
       # get max weight
-      p_min = self.min_tree.min() / self.sum_tree.sum()
+      p_min = self.min_tree.min() / self.sum_tree.sum()  #todo there is definitely some problem here
+      ##*todo      sum_tree.sum (0,0) ????    nope we should just delete it
       max_weight = (p_min * len(self)) ** (-beta)
       # calculate weights
       p_sample = self.sum_tree[idx] / self.sum_tree.sum()  

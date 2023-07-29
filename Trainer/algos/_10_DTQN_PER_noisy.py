@@ -144,9 +144,10 @@ def init_weights(module):
         module.bias.data.zero_()
         module.weight.data.fill_(1.0)
 class QNetwork(nn.Module):
-  def __init__(self,obs_size,action_size,embed_dim = 64,context_len=50,num_heads=8,hid_layers=3): #* 128 is a little too large...
+  def __init__(self,obs_size,action_size,embed_dim = 64,context_len=5,num_heads=8,hid_layers=3): #* 128 is a little too large...
     super().__init__()
     # lay = [32,64,32]
+    print("=========context_len",context_len,"========!!!!!!")
     self.position_embedding = nn.Parameter(tc.zeros(1,context_len,embed_dim),requires_grad=True)
     self.obs_embedding = nn.Linear(obs_size, embed_dim)
     self.dropout = nn.Dropout(0) #todo
@@ -262,9 +263,6 @@ class PrioritizedReplayBuffer(ReplayBuffer):
           tree_capacity *= 2
       self.sum_tree=SumSegmentTree(tree_capacity)#*find sum in any segment with O(logN),(not N)
       self.min_tree = MinSegmentTree(tree_capacity)#*find min in any segment in O(logN) 
-      #todo 
-      self.episode_avg_priority = 0
-      # self.
       #todo print self.episode_length
   def store(self, obs: np.ndarray, act: int, rew: float, done: bool, episode_len):
       """Store experience and priority."""
@@ -374,7 +372,7 @@ class Context:
         return np.roll(arr, -1, axis=0) if self.timestep >= self.max_length else arr
 class DQN_Agent(): 
   def __init__(self, gridgraph,hid_layer=1,emb_dim=64,self_play_episode_num=20,context_len=50):
-    print("----DTQN_PER_noisy_agent---")
+    print(f"----DTQN_PER_noisy_agent- context_len {context_len}--")
     self.context_len = context_len 
     self.env = gridgraph
     self.action_size = self.env.action_size  #6
@@ -415,7 +413,6 @@ class DQN_Agent():
   def update_model(self,):
     samples = self.replay.sample_batch()       
     weights = tc.FloatTensor(samples["weights"].reshape(-1,1)).to(device) 
-    #todo ??  reshape(-1,1)???
     indices = samples['indices']
     elementwise_loss = self._compute_dqn_loss(samples)
     loss = tc.mean(elementwise_loss * weights)  #importance sampling

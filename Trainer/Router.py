@@ -23,6 +23,7 @@ from Trainer.algos import _7_Duel_noisy_Nstep_nocat
 from Trainer.algos import _8_DTQN
 from Trainer.algos import _9_DTQN_PER
 from Trainer.algos import _10_DTQN_PER_noisy
+from Trainer.algos import _11_DTQN_step_PER_noisy
 from Trainer import Initializer as init
 
 from Trainer import Router_utils as utils
@@ -94,7 +95,9 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                             early_stop=early_stop
             )
     elif algos_name == "dtqn_per_noisy" or\
-                         algos_name == "dtqn_per":
+         algos_name == "dtqn_per" or\
+         algos_name == "dtqn_step_per":
+        print(algos_name,">>>>>>>")
         agent = algos_fn.DQN_Agent( graphcase,
                                    hid_layer,emb_dim,
                                    self_play_episode_num =self_play_episode_num,
@@ -129,38 +132,47 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     print("---end loop---")
     return success
 
-
+class Print_log:
+    def __init__(self) -> None:
+        pass
+    def log(self,item):
+        print(item)
 def main_fn(self_play_episode_num = 150,
             hid_layer=1,
             save_ckpt=True,load_ckpt=True,
             data_folder='train_data_/benchmark_reduced',
-            result_dir = "solutionsDRL",algos="DQN",
+            result_dir = "solutionsDRL",algos="dtqn_per_noisy",
             wandbName="",
             early_stop=False,
             emb_dim=64,
-            context_len = 30,
-            ):
+            context_len = 5,   #try other numbers 1~30,  I known 50 is bad and slow
+            enable_wandb=True
+    ):
     print(">>>>>>>>>>>>>>>\n",locals())
-    wandb.login()
-    project_name = "Global_route"
-    config={
-            "algos":algos,
-            "load":load_ckpt,
-            "save":save_ckpt,
-            "layer":hid_layer,
-            "emb_dim":emb_dim,
-            "episode":self_play_episode_num,
-            "context_len":context_len
-    }
-    wandb.init(
-        project=project_name,
-        name = timestamp(),
-        group = wandbName+"_"+"_".join(
-            [f"{key}={val}" for key, val in config.items()]
-        ),
-        config=config,
-    )    
-
+    if enable_wandb:
+        wandb.login()
+        project_name = "Global_route"
+        config={
+                "algos":algos,
+                "load":load_ckpt,
+                "save":save_ckpt,
+                "layer":hid_layer,
+                "emb_dim":emb_dim,
+                "episode":self_play_episode_num,
+                "context_len":context_len
+        }
+        wandb.init(
+            project=project_name,
+            name = timestamp(),
+            group = wandbName+"_"+"_".join(
+                [f"{key}={val}" for key, val in config.items()]
+            ),
+            config=config,
+        )    
+        logger = wandb
+    else:
+        print("disable wandb")
+        logger = Print_log()
     print(self_play_episode_num,result_dir)
     os.system(f'rm -r {result_dir}');    os.makedirs(result_dir);    
     benchmark_reduced_path = data_folder
@@ -185,18 +197,23 @@ def main_fn(self_play_episode_num = 150,
     elif algos == "cat_test":
         algos_fn = _6_noisy_cat_test
     elif algos == "nstep":
-        env = GridGraphV2.GridGraph     #! v2
+        #! v2  is a new environ interface, only support in several algos
+        env = GridGraphV2.GridGraph     
         algos_fn =  _7_Duel_noisy_Nstep_nocat
     elif algos == "dtqn":
         algos_fn = _8_DTQN
     elif algos == "dtqn_per":
         env = GridGraphV2.GridGraph     #! v2
         algos_fn = _9_DTQN_PER
-    elif algos == "dtqn_per_noisy":
+    elif algos == "dtqn_per_noisy":  #** episode per
         env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _10_DTQN_PER_noisy
+    elif algos == "dtqn_step_per":
+        env = GridGraphV2.GridGraph     #! v2
+        algos_fn =  _11_DTQN_step_PER_noisy
     for i in range(len(src_benchmark_file)):
-        read_file_name = f"{benchmark_reduced_path}/test_benchmark_{i+1}.gr"  #benchmark_reduced/test_benchmark_1.gr
+        #benchmark_reduced/test_benchmark_1.gr
+        read_file_name = f"{benchmark_reduced_path}/test_benchmark_{i+1}.gr"  
         print (f'\n********{i+1}/{len(src_benchmark_file)}******Working on {read_file_name}****************\n')
         start_time = time.time()
         success = train_one_epoch(read_file_name,
@@ -207,7 +224,7 @@ def main_fn(self_play_episode_num = 150,
                          globali=i,
                          self_play_episode_num=self_play_episode_num,
                          result_dir=result_dir,
-                         logger=wandb,
+                         logger=logger,
                          save_ckpt=save_ckpt,
                          ckpt_folder = "./model/",
                          early_stop=early_stop,
@@ -216,7 +233,7 @@ def main_fn(self_play_episode_num = 150,
                          context_len=context_len)
         success_count+=success
         print("train time ", time.time()-start_time)
-        wandb.log({'success_count':success_count})
+        logger.log({'success_count':success_count})
     return 
 
 

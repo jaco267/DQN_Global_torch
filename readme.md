@@ -17,7 +17,7 @@ python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCa
 ```       
 ## start training 
 ```sh
-python train.py --algos=dtqn_per_noisy --self_play_episode_num=4 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=True  --data_folder="test_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_context_len5_train" --hid_layer=3 --emb_dim=64 --context_len=5
+python train.py --algos=dtqn_per_noisy --self_play_episode_num=4 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=True  --data_folder="train_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_context_len5_train" --hid_layer=3 --emb_dim=64 --context_len=5
 ```
 ## start eval
 ```sh
@@ -33,4 +33,4 @@ while dqn can only solve 18/20
 
 ## wirelength
 ### dtqn vs A* solution
-<img src="assets/2023-07-28-10-05-37.png" alt= “” width="800px" >
+<img src="assets/2023-07-28-10-05-37.png" alt= “” width="500px" >
