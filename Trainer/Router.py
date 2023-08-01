@@ -11,14 +11,12 @@ import operator
 
 import wandb
 
-from Trainer.algos import DQN_Implementation_torch as DQN
+from Trainer.algos import DQN
 from Trainer.algos import DDQN
 from Trainer.algos import Dueling_DDQN
 from Trainer.algos import Duel_DDQN_PER
 from Trainer.algos import _5_Duel_DDQN_PER_noisy
-from Trainer.algos import _5_Duel_noisy_test
 from Trainer.algos import _6_PER_noisy_categorical
-from Trainer.algos import _6_noisy_cat_test
 from Trainer.algos import _7_Duel_noisy_Nstep_nocat
 from Trainer.algos import _8_DTQN
 from Trainer.algos import _9_DTQN_PER
@@ -84,24 +82,14 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     #!!!  core  DQN_implement.py
     success = 0
     print("----start training---")
-    if algos_name == "nstep":
-        agent = algos_fn.DQN_Agent( graphcase,hid_layer,emb_dim,self_play_episode_num)  
-        results, solutionTwoPin,posTwoPinNum,success = agent.train(
-                            twoPinEachNetClear,
-                            netSort,
-                            ckpt_path=f"{ckpt_folder}{algos_name}.ckpt",
-                            logger=logger,
-                            save_ckpt=save_ckpt,
-                            load_ckpt=load_ckpt,
-                            early_stop=early_stop
-            )
-    elif algos_name == "dtqn_per_noisy" or\
+    if   algos_name == "nstep" or\
+         algos_name == "dtqn" or\
+         algos_name == "dtqn_per_noisy" or\
          algos_name == "dtqn_per" or\
          algos_name == "dtqn_step_per" or\
          algos_name == "dtqn_noisy":
         print(algos_name,">>>>>>>")
-        agent = algos_fn.DQN_Agent( graphcase,
-                                   hid_layer,emb_dim,
+        agent = algos_fn.DQN_Agent( graphcase, hid_layer,emb_dim,
                                    self_play_episode_num =self_play_episode_num,
                                    context_len=context_len)  
         results, solutionTwoPin,posTwoPinNum,success = agent.train(
@@ -112,7 +100,6 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                             save_ckpt=save_ckpt,
                             load_ckpt=load_ckpt,
                             early_stop=early_stop,
-                            
             )
     else:
         agent = algos_fn.DQN_Agent( graphcase,self_play_episode_num)  
@@ -139,16 +126,16 @@ class Print_log:
         pass
     def log(self,item):
         print(item)
-def main_fn(self_play_episode_num = 150,
-            hid_layer=1,
-            save_ckpt=True,load_ckpt=True,
-            data_folder='train_data_/benchmark_reduced',
-            result_dir = "solutionsDRL",algos="dtqn_per_noisy",
-            wandbName="",
-            early_stop=False,
-            emb_dim=64,
-            context_len = 5,   #try other numbers 1~30,  I known 50 is bad and slow
-            enable_wandb=True
+def main_fn(
+        algos="dtqn_per_noisy",
+        hid_layer=1, emb_dim=64,
+        context_len = 5,   #try other numbers 1~30,  I known 50 is bad and slow
+        early_stop=False,
+        result_dir = "solutionsDRL",
+        save_ckpt=True,load_ckpt=True,
+        self_play_episode_num = 150,    
+        enable_wandb=True, wandbName="",    
+        data_folder='train_data_/benchmark_reduced',
     ):
     print(">>>>>>>>>>>>>>>\n",locals())
     if enable_wandb:
@@ -182,27 +169,24 @@ def main_fn(self_play_episode_num = 150,
     #*  ex. test_benchmark_1.gr,  test_benchmark_2.gr .....
     success_count = 0
     env = GridGraph.GridGraph
-    if algos == "DQN":
+    if algos == "dqn":
         algos_fn = DQN
-    elif algos == "DDQN":
+    elif algos == "ddqn":
         algos_fn = DDQN
-    elif algos =="duel_DDQN":
+    elif algos =="dddqn":
         algos_fn = Dueling_DDQN
-    elif algos =="duel_DDQN_PER":
+    elif algos =="dddqn_PER":
         algos_fn = Duel_DDQN_PER
     elif algos == "noisy":
         algos_fn = _5_Duel_DDQN_PER_noisy
-    elif algos == "noisy_test":
-        algos_fn = _5_Duel_noisy_test
     elif algos == "categorical":
         algos_fn = _6_PER_noisy_categorical
-    elif algos == "cat_test":
-        algos_fn = _6_noisy_cat_test
     elif algos == "nstep":
         #! v2  is a new environ interface, only support in several algos
         env = GridGraphV2.GridGraph     
         algos_fn =  _7_Duel_noisy_Nstep_nocat
     elif algos == "dtqn":
+        env = GridGraphV2.GridGraph     #! v2
         algos_fn = _8_DTQN
     elif algos == "dtqn_per":
         env = GridGraphV2.GridGraph     #! v2

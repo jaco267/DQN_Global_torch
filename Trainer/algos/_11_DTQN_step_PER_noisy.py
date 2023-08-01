@@ -144,7 +144,8 @@ def init_weights(module):
         module.bias.data.zero_()
         module.weight.data.fill_(1.0)
 class QNetwork(nn.Module):
-  def __init__(self,obs_size,action_size,embed_dim = 64,context_len=5,num_heads=8,hid_layers=3): #* 128 is a little too large...
+  def __init__(self,obs_size,action_size,embed_dim = 64,context_len=5,num_heads=8,hid_layers=3):
+     #* 128 is a little too large...
     super().__init__()
     print("=========context_len...",context_len,"========!!!!!!")
     # lay = [32,64,32]
@@ -185,7 +186,6 @@ class QNetwork(nn.Module):
     self.val_hid_layer.reset_noise()
     self.adv_lay.reset_noise()
     self.val_lay.reset_noise()
-    
 class ReplayBuffer:
   """A simple numpy replay buffer."""
   def __init__(self,  obs_dim: int=12, frame_size: int=50000, batch_size: int = 32,   context_len=50,  env_max_steps =  100  #* gridword max steps
@@ -341,7 +341,6 @@ class PrioritizedReplayBuffer(ReplayBuffer):
       weight = (p_sample * len(self)) ** (-beta)
       weight = weight / max_weight
       return weight   #*   0~1
-
 class Context:
     """A Dataclass dedicated to storing the agent's history (up to the previous `max_length`)"""
     def __init__( self,

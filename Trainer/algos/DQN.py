@@ -58,10 +58,7 @@ class ReplayBuffer:
     			done=self.done_buf[idxs])
   def __len__(self) -> int:
     return self.size
-
 class DQN_Agent(): 
-    #  constructs a policy from the Q values predicted by the Q Network. (a) Epsilon Greedy Policy.(b) Greedy Policy. 
-    # train the Q Network, by interacting with the environment. # Experience Replay.
     def __init__(self, gridgraph,self_play_episode_num=20):
       print("----DQN_agent---")
         # as well as training parameters - number of episodes / iterations, etc.

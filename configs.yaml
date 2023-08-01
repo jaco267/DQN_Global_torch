@@ -1,0 +1,29 @@
+# train
+# python train.py --algos=dtqn_noisy --self_play_episode_num=4 --load_ckpt=True --save_ckpt=True  --data_folder="train_data_/benchmark_reduced" --wandbName="NoPer" --hid_layer=3 --emb_dim=64 --context_len=5 --early_stop=False  --enable_wandb=True
+# eval
+# python train.py --algos=dtqn_noisy --self_play_episode_num=150 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=False  --data_folder="test_data_/benchmark_reduced" --wandbName="dtqn_noisy_pretain_test" --hid_layer=3 --emb_dim=64 --context_len=5
+default: 
+  all:
+    algos:         None
+    wandbName:     None
+    hid_layer:  &lay 3
+    emb_dim:    &dim   64
+    context_len: &ctx_l  5
+    early_stop: False
+    result_dir: solutionsDRL
+  train:
+    load_ckpt: True
+    save_ckpt: True
+    self_play_episode_num: 4
+    enable_wandb: False
+    data_folder:  train_data_/benchmark_reduced
+  eval:
+    load_ckpt: True
+    save_ckpt: False
+    self_play_episode_num: 150
+    enable_wandb: True
+    data_folder:  test_data_/benchmark_reduced
+
+# custom:
+#   dtqn:
+#     algos

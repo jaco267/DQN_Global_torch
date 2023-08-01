@@ -308,7 +308,8 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         return weight   #*   0~1
 
 class DQN_Agent(): 
-  def __init__(self,  gridgraph,hid_layer=1,emb_dim=64, self_play_episode_num=20):
+  def __init__(self,  gridgraph,hid_layer=1,emb_dim=64, 
+               self_play_episode_num=20, context_len=None):  # ctx_len is for dtqn not for now
     print("----nstep---")
     self.env = gridgraph
     action_size = self.env.action_size  #6
