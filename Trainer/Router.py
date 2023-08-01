@@ -24,6 +24,7 @@ from Trainer.algos import _8_DTQN
 from Trainer.algos import _9_DTQN_PER
 from Trainer.algos import _10_DTQN_PER_noisy
 from Trainer.algos import _11_DTQN_step_PER_noisy
+from Trainer.algos import _12_DTQN_noisy
 from Trainer import Initializer as init
 
 from Trainer import Router_utils as utils
@@ -96,7 +97,8 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
             )
     elif algos_name == "dtqn_per_noisy" or\
          algos_name == "dtqn_per" or\
-         algos_name == "dtqn_step_per":
+         algos_name == "dtqn_step_per" or\
+         algos_name == "dtqn_noisy":
         print(algos_name,">>>>>>>")
         agent = algos_fn.DQN_Agent( graphcase,
                                    hid_layer,emb_dim,
@@ -211,6 +213,9 @@ def main_fn(self_play_episode_num = 150,
     elif algos == "dtqn_step_per":
         env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _11_DTQN_step_PER_noisy
+    elif algos == "dtqn_noisy":
+        env = GridGraphV2.GridGraph     #! v2
+        algos_fn =  _12_DTQN_noisy
     for i in range(len(src_benchmark_file)):
         #benchmark_reduced/test_benchmark_1.gr
         read_file_name = f"{benchmark_reduced_path}/test_benchmark_{i+1}.gr"  
