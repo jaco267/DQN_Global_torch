@@ -42,5 +42,5 @@ while dqn can only solve 18/20
 
 
 ### Compare with original implementation
-The original paper used A* memory burn-in to speed up training.
+The [original implementation](https://github.com/haiguanl/DQN_GlobalRouting) used A* memory burn-in to speed up training.
 This implementation didn't use memory burn-in technique for simplicity. 
