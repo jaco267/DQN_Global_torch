@@ -1,7 +1,7 @@
 ###  DTQN Global routing
 In this repo, I used [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN) to solve the Global routing problem, and found that dtqn can generalize better than DQN in the Global routing environment.   
 The global routing benchmark generator is from the paper ["A Deep Reinforcement Learning Approach for Global Routing"](https://arxiv.org/pdf/1906.08809.pdf).     
-Original implementation is in [this repo]((https://github.com/haiguanl/DQN_GlobalRouting)).
+Original implementation is in [this repo](https://github.com/haiguanl/DQN_GlobalRouting).
 ### Compare DTQN with DQN
 DTQN can model the stochastic and partially observable environment better than dqn, making the pretrain more robust.
 
