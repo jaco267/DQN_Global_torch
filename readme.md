@@ -1,11 +1,10 @@
-### rainbow DTQN
-This repo combine [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN) and [rainbow](https://arxiv.org/abs/1710.02298) to solve the Global routing problem. 
+###  DTQN Global routing
 
 The global routing benchmark generator is from the paper ["A Deep Reinforcement Learning Approach for Global Routing"](https://arxiv.org/pdf/1906.08809.pdf).     
-In this implementation, we used DTQN and rainbow instead of DQN, and outperform the previous result.   
-Rainbow DTQN can solve global routing problem even without A* memory burn-in.
+In this implementation, I used [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN) instead of DQN to solve the Global routing problem, and found that dtqn performs better than DQN in this partially observable environment.   
 
-In the experiment, DTQN can generalize better than DQN, making the pretraining possible.
+### Compare DTQN with DQN
+DTQN can model the stochastic and partially observable environment better than dqn, making the pretrain more robust.
 
 ## Generate Dataset
 To train the agent, first generate the train and eval dataset
@@ -39,3 +38,9 @@ while dqn can only solve 18/20
 ## wirelength
 ### dtqn vs A* solution
 <img src="assets/2023-08-03-18-42-14.png" alt= “” width="500px" >
+
+
+
+### Compare with original implementation
+The original paper used A* memory burn-in to speed up training.
+This implementation didn't use memory burn-in technique for simplicity. 

@@ -1,4 +1,3 @@
-# https://stackabuse.com/executing-shell-commands-with-python/
 import os
 import fire
 import yaml
