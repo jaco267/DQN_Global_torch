@@ -5,3 +5,4 @@ train_data_20/
 solutionsDRL*/
 test_data_/*
 wandb/*
+private/*

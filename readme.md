@@ -16,12 +16,17 @@ python gen_data.py --benchmarkNumber 5 --gridSize 8 --netNum 20 --vCap 4  --hCap
 python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./test_data_/
 ```       
 ## start training 
+run.py is just a wrapper for train.py with some default options in configs.yaml
 ```sh
-python train.py --algos=dtqn_per_noisy --self_play_episode_num=4 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=True  --data_folder="train_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_context_len5_train" --hid_layer=3 --emb_dim=64 --context_len=5
+python run.py --mode "train" --algos dtqn_noisy --enable_wandb True --run_benchmark_num=30 --wandbName None
+# this is equivalent to
+# python train.py --algos=dtqn_noisy --self_play_episode_num=4 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=True  --data_folder="train_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_train" --hid_layer=3 --emb_dim=64 --context_len=5
 ```
 ## start eval
 ```sh
-python train.py --algos=dtqn_per_noisy --self_play_episode_num=150 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=True  --data_folder="test_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_context_len5" --hid_layer=3 --emb_dim=64 --context_len=5
+python run.py --mode "eval" --algos dtqn_noisy 
+# this is equivalent to 
+# python train.py --algos=dtqn_noisy --self_play_episode_num=150 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=False  --data_folder="test_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_context_len5" --hid_layer=3 --emb_dim=64 --context_len=5 
 ```
 
 ## Go to wandb site to check the result
@@ -33,4 +38,4 @@ while dqn can only solve 18/20
 
 ## wirelength
 ### dtqn vs A* solution
-<img src="assets/2023-07-28-10-05-37.png" alt= “” width="500px" >
+<img src="assets/2023-08-03-18-42-14.png" alt= “” width="500px" >
