@@ -1,4 +1,3 @@
-
 '''
 #https://github.com/kevslinger/DTQN
 @article{esslinger2022dtqn,
@@ -8,8 +7,6 @@
   year = {2022},
 }
 '''
-print("-------gggggiiiiitttt---------")
-#*** hmmm,   maybe sample from episode is just better than sample from pin
 import numpy as np
 import torch as tc
 from torch import nn
@@ -24,7 +21,13 @@ from torch.nn.utils import clip_grad_norm_
 np.random.seed(10701)
 random.seed(10701)
 import math
-device = tc.device("cuda" if tc.cuda.is_available() else "cpu")
+from contextlib import nullcontext
+device_type = 'cuda' if tc.cuda.is_available() else 'cpu'
+device = tc.device(device_type)
+dtype = tc.bfloat16 if tc.cuda.is_available() and tc.cuda.is_bf16_supported() else tc.float32 
+ctx = nullcontext() if device_type == 'cpu' else\
+      tc.amp.autocast(device_type=device_type, dtype=dtype)
+
 class NoisyLinear(nn.Module):
     """Noisy linear module for NoisyNet. """
     def __init__(self, in_features: int, out_features: int, std_init: float = 0.5):
@@ -263,7 +266,8 @@ class DQN_Agent():
     context_obs_tensor = tc.FloatTensor( #50
           self.context.obs[: min(self.context.max_length, self.context.timestep + 1)],
       ).unsqueeze(0).to(device)   #todo investigate the shape  so  seq_len range from 1 to 50,  means output of transformer also range from 1 to 50 ??
-    q_values = self.dqn(context_obs_tensor)
+    with ctx:
+      q_values = self.dqn(context_obs_tensor)
     return tc.argmax(q_values[:, -1, :]).item()   #argmax(1,-1,action_dim)  #todo  the shape
   def update_model(self,):
     samples = self.replay.sample_batch()       
@@ -295,18 +299,20 @@ class DQN_Agent():
     b_action =tc.LongTensor(samples["acts"]).to(device)  # action
     b_reward = tc.FloatTensor(samples["rews"]).to(device)  # reward
     b_done = tc.FloatTensor(samples["done"]).to(device) # is term
-    
-    q_batch = self.dqn(b_obs)# action generate by q_batch
+    with ctx:
+      q_batch = self.dqn(b_obs)# action generate by q_batch
     q_values = q_batch.gather(2,b_action).squeeze()
     with tc.no_grad():  #* trainable false
-      q_batch_next = self.dqn_target(b_obs_next).gather(#ddqn # [batch-size x hist-len x n-actions] 
-         2, self.dqn(b_obs_next).argmax(dim=2).unsqueeze(-1)
-      ).squeeze()
+      with ctx:
+        q_batch_next = self.dqn_target(b_obs_next).gather(#ddqn # [batch-size x hist-len x n-actions] 
+          2, self.dqn(b_obs_next).argmax(dim=2).unsqueeze(-1)
+        ).squeeze()
       # print(b_reward.shape,q_batch_next.shape,b_done.shape)
       targets = b_reward.squeeze()+self.gamma*q_batch_next*(1-b_done.squeeze())
     q_values = q_values[:, -self.context_len :]
     targets = targets[:, -self.context_len :]  
-    elementwise_loss = tc.mean(self.criterion(q_values,targets),dim=-1) #*no mean at batch
+    with ctx:
+      elementwise_loss = tc.mean(self.criterion(q_values,targets),dim=-1) #*no mean at batch
     return elementwise_loss
 
   def train(self,

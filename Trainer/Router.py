@@ -23,6 +23,7 @@ from Trainer.algos import _9_DTQN_PER
 from Trainer.algos import _10_DTQN_PER_noisy
 from Trainer.algos import _11_DTQN_step_PER_noisy
 from Trainer.algos import _12_DTQN_noisy
+from Trainer.algos import _13_DTQN_noisy_bf
 from Trainer import Initializer as init
 
 from Trainer import Router_utils as utils
@@ -50,8 +51,7 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                     ckpt_folder,
                     emb_dim,
                     context_len):
-
-    print("---data preprocessing---")
+    #* print("---data preprocessing---")
     # # Getting Net Info
     grid_info = init.read(filename)
     gridParameters:dict = init.gridParameters(grid_info)
@@ -62,7 +62,7 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     for i in range(gridParameters['numNet']):   #20    #A1~A20  for each teset_benchmark.gr
         order = int(sortedHalfWireLength[i][0])
         netSort.append(order)           #arrange net by its wireLength 
-    print(f"---netsort {netSort} len {len(netSort)}---")
+    #* print(f"---netsort {netSort} len {len(netSort)}---")
     twoPinEachNetClear:list = utils.gen_2pinListClear(gridParameters)    
 
     twopinlist_nonet = utils.gen2pinlistNet(
@@ -70,8 +70,8 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                                     gridParameters,
                                     sortedHalfWireLength
                             ))
-    assert np.sum(twoPinEachNetClear) == len(twopinlist_nonet)   #*== 49,  20net has 49 pin connect, avg_connect/net ~=2.5
-    print("---DRL Module from here---")
+    assert np.sum(twoPinEachNetClear) == len(twopinlist_nonet)   #== 49,  20net has 49 pin connect, avg_connect/net ~=2.5
+    #* print("---DRL Module from here---")
     os.makedirs(ckpt_folder,exist_ok=True);  
                                                 
     graphcase = env(gridParameters,
@@ -81,13 +81,14 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     # Training DRL
     #!!!  core  DQN_implement.py
     success = 0
-    print("----start training---")
+    #* print("----start training---")
     if   algos_name == "nstep" or\
          algos_name == "dtqn" or\
          algos_name == "dtqn_per_noisy" or\
          algos_name == "dtqn_per" or\
          algos_name == "dtqn_step_per" or\
-         algos_name == "dtqn_noisy":
+         algos_name == "dtqn_noisy" or\
+         algos_name == "dtqn_noisy_bf":
         print(algos_name,">>>>>>>")
         agent = algos_fn.DQN_Agent( graphcase, hid_layer,emb_dim,
                                    self_play_episode_num =self_play_episode_num,
@@ -109,23 +110,23 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                                     ckpt_folder,
                     )
         print("ffrrrrr",posTwoPinNum,".........")
-    print("======---saving results(Generate output file for DRL solver)---======") 
-    print(f"-----{len(graphcase.twopin_combo)==len(twopinlist_nonet)}-------")
-    print(f"=====posTwoPinNum  {posTwoPinNum}===={len(graphcase.twopin_combo)},{len(twopinlist_nonet)}")
+    # print("======---saving results(Generate output file for DRL solver)---======") 
+    assert len(graphcase.twopin_combo)==len(twopinlist_nonet)
+    print(f"=====posTwoPinNum  {posTwoPinNum}/{len(graphcase.twopin_combo)}======")
     if posTwoPinNum >= len(twopinlist_nonet): 
         save_utils.save(result_dir,globali,agent.max_episodes,gridParameters,
             results['reward_plot_combo'], results['reward_plot_combo_pure'],
             results['solutionDRL'],sortedHalfWireLength, solutionTwoPin)
     else:
         print("DRL fails with existing max episodes! : (")
-    print("---end loop---")
     return success
 
 class Print_log:
     def __init__(self) -> None:
         pass
     def log(self,item):
-        print(item)
+        # print(item)
+        pass
 def main_fn(
         algos="dtqn_per_noisy",
         hid_layer=1, emb_dim=64,
@@ -136,6 +137,7 @@ def main_fn(
         self_play_episode_num = 150,    
         enable_wandb=True, wandbName="",    
         data_folder='train_data_/benchmark_reduced',
+        run_benchmark_num = None,
     ):
     print(">>>>>>>>>>>>>>>\n",locals())
     if enable_wandb:
@@ -200,11 +202,16 @@ def main_fn(
     elif algos == "dtqn_noisy":
         env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _12_DTQN_noisy
-    for i in range(len(src_benchmark_file)):
+    elif algos == "dtqn_noisy_bf":
+        env = GridGraphV2.GridGraph     #! v2
+        algos_fn =  _13_DTQN_noisy_bf
+    if run_benchmark_num == None:
+        run_benchmark_num = len(src_benchmark_file)
+    run_benchmark_num = min(run_benchmark_num,len(src_benchmark_file))
+    for i in range(run_benchmark_num):
         #benchmark_reduced/test_benchmark_1.gr
         read_file_name = f"{benchmark_reduced_path}/test_benchmark_{i+1}.gr"  
-        print (f'\n********{i+1}/{len(src_benchmark_file)}******Working on {read_file_name}****************\n')
-        start_time = time.time()
+        print (f'\n********{i+1}/{run_benchmark_num}******Working on {read_file_name}****************')
         success = train_one_epoch(read_file_name,
                          env,     
                          algos_fn, 
@@ -221,7 +228,6 @@ def main_fn(
                          emb_dim=emb_dim,
                          context_len=context_len)
         success_count+=success
-        print("train time ", time.time()-start_time)
         logger.log({'success_count':success_count})
     return 
 

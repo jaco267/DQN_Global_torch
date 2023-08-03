@@ -3,7 +3,7 @@ matplotlib.use('TkAgg')
 import numpy as np
 
 
-from Trainer import Initializer as init
+# from Trainer import Initializer as init
 
 # Create grid graph based on parsed input info
 '''  in test_benchmark_1.gr
@@ -53,7 +53,7 @@ class GridGraph(object):
         netpair       ex.A1 4pin-1 = 3connect
         [3, 2, 2, 1, 4, 2, 3, 4,... 3, 1, 4] 
         '''
-        print("\ngrid graphV2")
+        print("grid graphV2")
         self.max_step = max_step;  #*** 100
         self.gridParameters = gridParameters
         self.twopin_combo = twopin_combo; 

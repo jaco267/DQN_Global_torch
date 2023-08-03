@@ -6,8 +6,10 @@ import json
 import Trainer
 def main(algos="dtqn",
          mode="eval",
-         wandbName=None):
-    algos_list = ['dqn','dtqn','nstep']
+         wandbName=None,
+         enable_wandb=None,
+         run_benchmark_num=None):
+    algos_list = ['dqn','dtqn','nstep','dtqn_noisy']
     mode_list =  ['eval','train'] 
     if algos not in algos_list:
         raise Exception(f'algo should be in {algos_list}') 
@@ -36,6 +38,8 @@ def main(algos="dtqn",
         wandb_dict = {'algos':algos,'wandbName':algos}
     print(wandb_dict)
     config_dict.update(wandb_dict)
+    if enable_wandb != None:
+        config_dict.update({'enable_wandb':enable_wandb,'run_benchmark_num':run_benchmark_num})
     print("============config result============")
     Trainer.Router.main_fn(**config_dict)
     return 

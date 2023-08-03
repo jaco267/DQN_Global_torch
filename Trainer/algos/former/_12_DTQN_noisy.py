@@ -1,4 +1,3 @@
-
 '''
 #https://github.com/kevslinger/DTQN
 @article{esslinger2022dtqn,
@@ -9,6 +8,7 @@
 }
 '''
 print("-------gggggiiiiitttt---------")
+#!/usr/bin/env python
 #*** hmmm,   maybe sample from episode is just better than sample from pin
 import numpy as np
 import torch as tc
@@ -18,7 +18,6 @@ import random
 import os
 from typing import Dict, List, Tuple
 from Trainer.algos.segment_tree import MinSegmentTree, SumSegmentTree
-from Trainer.algos.transformer_utils.transformer import TransformerLayer,init_weights
 import Trainer.algos.resultUtils  as U  #import end_episode
 from torch.nn.utils import clip_grad_norm_
 np.random.seed(10701)
@@ -81,9 +80,72 @@ class NoisyLinear(nn.Module):
         """Set scale to make noise (factorized gaussian noise)."""
         x = tc.randn(size)
         return x.sign().mul(x.abs().sqrt())
+class TransformerLayer(nn.Module):
+    """Create a single transformer block. DTQN may stack multiple blocks."""
+    def __init__( self,
+        num_heads: int,#  Number of heads to use for MultiHeadAttention.
+        embed_dim: int,#  The dimensionality of the layer.
+        history_len: int,# The maximum number of observations to take in.
+        dropout: float=0,#  Dropout percentage.
+    ):
+        super().__init__()
+        self.layernorm1 = nn.LayerNorm(embed_dim)
+        self.layernorm2 = nn.LayerNorm(embed_dim)
+        self.attention = nn.MultiheadAttention(  
+            embed_dim=embed_dim,num_heads=num_heads,  
+            dropout=dropout,    batch_first=True
+        )
+        self.ffn = nn.Sequential( 
+            nn.Linear(embed_dim, 4 * embed_dim), nn.ReLU(),
+            nn.Linear(4 * embed_dim, embed_dim), nn.Dropout(dropout),
+        )
+        # Just storage for attention weights for visualization
+        self.alpha = None
+        # Set up causal masking for attention
+        self.attn_mask = nn.Parameter(
+            tc.triu(tc.ones(history_len, history_len), diagonal=1),
+            requires_grad=False
+        )
+        self.attn_mask[self.attn_mask.bool()] = -float("inf")
+        """
+          The mask will look like:
+          [0, -inf, -inf, ..., -inf]
+          [0,    0, -inf, ..., -inf]
+          ...
+          [0,    0,    0, ...,    0]
+          Where 0 means that timestep is allowed to attend.
+          So the first timestep can attend only to the first timestep
+          and the last timestep can attend to all observations.        
+        """
+    def forward(self, x: tc.Tensor) -> tc.Tensor:
+        # bs, seq_len, dim
+        attention, self.alpha = self.attention(
+            x,x,x,  attn_mask=self.attn_mask[: x.size(1), : x.size(1)],
+            average_attn_weights=True,  # Only affects self.alpha for visualizations
+        )
+        # Skip connection then LayerNorm
+        x = x + F.relu(attention)
+        x = self.layernorm1(x)
+        ffn = self.ffn(x)
+        # Skip connection then LayerNorm
+        x = x + F.relu(ffn)
+        x = self.layernorm2(x)
+        return x
+def init_weights(module):
+    # print(module,"????")
+    if isinstance(module, (nn.Linear, nn.Embedding)):
+        module.weight.data.normal_(mean=0.0, std=0.02)
+        if isinstance(module, nn.Linear) and module.bias is not None:
+            module.bias.data.zero_()
+    elif isinstance(module, nn.MultiheadAttention):
+        module.in_proj_weight.data.normal_(mean=0.0, std=0.02)
+        module.out_proj.weight.data.normal_(mean=0.0, std=0.02)
+        module.in_proj_bias.data.zero_()
+    elif isinstance(module, nn.LayerNorm):
+        module.bias.data.zero_()
+        module.weight.data.fill_(1.0)
 class QNetwork(nn.Module):
-  def __init__(self,obs_size,action_size,embed_dim = 64,
-               context_len=5,hid_layers=3,num_heads=8,): #* 128 is a little too large...
+  def __init__(self,obs_size,action_size,embed_dim = 64,context_len=5,num_heads=8,hid_layers=3): #* 128 is a little too large...
     super().__init__()
     print("=========context_len...",context_len,"========!!!!!!")
     # lay = [32,64,32]
@@ -127,7 +189,7 @@ class QNetwork(nn.Module):
     
 class ReplayBuffer:
   """A simple numpy replay buffer."""
-  def __init__(self,  obs_dim: int=12, frame_size: int=50000, batch_size: int = 32,   context_len=5,  env_max_steps =  100  #* gridword max steps
+  def __init__(self,  obs_dim: int=12, frame_size: int=50000, batch_size: int = 32,   context_len=50,  env_max_steps =  100  #* gridword max steps
   ):
     self.context_len = context_len;  self.obs_dim = obs_dim
     self.frame_size = frame_size;  self.batch_size =  batch_size
@@ -231,11 +293,10 @@ class DQN_Agent():
     self.env = gridgraph
     self.action_size = self.env.action_size  #6
     obs_size = self.env.obs_size        #12
-    env_max_step = self.env.max_step  #100
-    self.dqn = QNetwork(obs_size,self.action_size,embed_dim=emb_dim,
-                        context_len=context_len,hid_layers=hid_layer,).to(device)
-    self.dqn_target = QNetwork(obs_size,self.action_size,embed_dim=emb_dim,
-                        context_len=context_len,hid_layers=hid_layer,).to(device)
+    env_max_step = self.env.max_step
+    assert env_max_step==100
+    self.dqn = QNetwork(obs_size,self.action_size,embed_dim=emb_dim,hid_layers=hid_layer,context_len=context_len).to(device)
+    self.dqn_target = QNetwork(obs_size,self.action_size,embed_dim=emb_dim,hid_layers=hid_layer,context_len=context_len).to(device)
     self.dqn_target.load_state_dict(self.dqn.state_dict())
     self.dqn_target.eval()
     #** PER
@@ -326,20 +387,21 @@ class DQN_Agent():
     num_frames = self.max_episodes*twoPinNum
     for episode in range(self.max_episodes):	
       self.result.init_episode(agent=self)
-      for pin in range(twoPinNum):                     #,
+      for pin in range(twoPinNum):
         #* PER: increase beta (importance sampling)
         fraction = min(frames_i/num_frames,1.0)
         self.beta = self.beta + fraction * (1.0 - self.beta)  #beta ~ 1
-        state = self.env.reset(pin)     #,
+        state = self.env.reset(pin)     #*  New loop!
         obs = self.env.state2obsv()
-        self.context.reset(obs) #context_reset(env.reset())
+        #***   context_reset(env.reset())
+        self.context.reset(obs)
         self.replay.initialize_episode_buffer(obs)   
         is_terminal = False;    rewardfortwopin = 0
         while not is_terminal:
           with tc.no_grad():
             action = self.get_action()
-            nextstate, reward, is_terminal, _ = self.env.step(action)  # agent step  
-            self.result.update_episode_reward(reward)  #,
+            nextstate, reward, is_terminal, _ = self.env.step(action)  #* agent step  
+            self.result.update_episode_reward(reward)
             obs = self.env.state2obsv()
             #*update_context_and_buffer
             self.context.add_transition( obs, action, reward, is_terminal )
@@ -355,7 +417,27 @@ class DQN_Agent():
          if self.result.PosTwoPinNum/len(self.env.twopin_combo) > 0.9:
             print("early stopping when training to prevent overfitting")
             break   
-    U.save_ckpt_fn(self,ckpt_path,save_ckpt)
-    success, results, solution = U.make_solutions(self,twoPinNum,netSort,twoPinNumEachNet,results)
-
+    
+    if save_ckpt:
+      print('\nSave model')
+      tc.save(self.dqn.state_dict(),ckpt_path)
+      print(f"Model saved in path: {ckpt_path}")
+    else:
+      print("dont save model")
+    solution = self.result.best_route
+    assert len(solution) == twoPinNum
+    for i in range(len(netSort)):
+      results['solutionDRL'].append([])
+    success = 0
+    if self.result.PosTwoPinNum  == twoPinNum:
+      dumpPointer = 0
+      for i in range(len(netSort)):
+        netToDump = netSort[i]
+        for j in range(twoPinNumEachNet[netToDump]):
+          results['solutionDRL'][netToDump].append(solution[dumpPointer])
+          dumpPointer = dumpPointer + 1
+      success = 1
+    else:
+      results['solutionDRL'] = solution
+  
     return results,	 solution,  self.result.PosTwoPinNum,success

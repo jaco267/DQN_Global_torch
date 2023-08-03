@@ -48,3 +48,27 @@ def load_ckpt_or_pass(agent,ckpt_path):
         print(f"loading {ckpt_path}")
         statedict = tc.load(ckpt_path)   
         agent.dqn.load_state_dict(statedict)
+def save_ckpt_fn(agent,ckpt_path,save_ckpt):
+    if save_ckpt:                             #,
+      tc.save(agent.dqn.state_dict(),ckpt_path)
+      print(f"\nSave model, Model saved in path: {ckpt_path}")
+    else:
+      print("dont save model")
+
+def make_solutions(self,twoPinNum,netSort,twoPinNumEachNet,results):
+    solution = self.result.best_route
+    assert len(solution) == twoPinNum
+    for i in range(len(netSort)):
+      results['solutionDRL'].append([])
+    if self.result.PosTwoPinNum  == twoPinNum:   #,
+      dumpPointer = 0
+      for i in range(len(netSort)):
+        netToDump = netSort[i]
+        for j in range(twoPinNumEachNet[netToDump]):
+          results['solutionDRL'][netToDump].append(solution[dumpPointer])
+          dumpPointer = dumpPointer + 1
+      success = 1
+    else:
+      results['solutionDRL'] = solution
+      success = 0   
+    return success,results,solution

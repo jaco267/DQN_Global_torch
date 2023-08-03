@@ -7,7 +7,7 @@ default:
     algos:         None
     wandbName:     None
     hid_layer:  &lay 3
-    emb_dim:    &dim   64
+    emb_dim:    &dim   64      #  128 is a little too large...
     context_len: &ctx_l  5
     early_stop: False
     result_dir: solutionsDRL
@@ -15,7 +15,7 @@ default:
     load_ckpt: True
     save_ckpt: True
     self_play_episode_num: 4
-    enable_wandb: False
+    enable_wandb: True
     data_folder:  train_data_/benchmark_reduced
   eval:
     load_ckpt: True
