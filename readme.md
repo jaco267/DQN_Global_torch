@@ -15,14 +15,19 @@ python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCa
 ```       
 ## start training 
 run.py is just a wrapper for train.py with some default options in configs.yaml
+- algos  ( algos name are all in Trainer/Router.py)
+  - dqn
+  - dtqn_noisy
+  - dtqn_eps
+  - dtqn_per_noisy
 ```sh
-python run.py --mode "train" --algos dtqn_noisy --enable_wandb True --run_benchmark_num=30 --wandbName None
+python run.py --mode "train" --algos dtqn_noisy --enable_wandb True --run_benchmark_num=30 --wandbName Train
 # this is equivalent to
 # python train.py --algos=dtqn_noisy --self_play_episode_num=4 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=True  --data_folder="train_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_train" --hid_layer=3 --emb_dim=64 --context_len=5
 ```
 ## start eval
 ```sh
-python run.py --mode "eval" --algos dtqn_noisy 
+python run.py --mode "eval" --algos dtqn_noisy --wandbName Eval
 # this is equivalent to 
 # python train.py --algos=dtqn_noisy --self_play_episode_num=150 --result_dir=solutionsDRL --load_ckpt=True --save_ckpt=False  --data_folder="test_data_/benchmark_reduced" --wandbName="dtqn_per_noisy_context_len5" --hid_layer=3 --emb_dim=64 --context_len=5 
 ```

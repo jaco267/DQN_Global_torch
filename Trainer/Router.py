@@ -15,10 +15,13 @@ from Trainer.algos import DQN
 from Trainer.algos import DDQN
 from Trainer.algos import Dueling_DDQN
 from Trainer.algos import Duel_DDQN_PER
+
+from Trainer.algos import _1_DQN
 from Trainer.algos import _5_Duel_DDQN_PER_noisy
 from Trainer.algos import _6_PER_noisy_categorical
-from Trainer.algos import _7_Duel_noisy_Nstep_nocat
-from Trainer.algos import _8_DTQN
+from Trainer.algos import _7_DQN_rainbow_nocat
+
+from Trainer.algos import _8_DTQN_epsilon
 from Trainer.algos import _9_DTQN_PER
 from Trainer.algos import _10_DTQN_PER_noisy
 from Trainer.algos import _11_DTQN_step_PER_noisy
@@ -82,8 +85,9 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     #!!!  core  DQN_implement.py
     success = 0
     #* print("----start training---")
-    if   algos_name == "nstep" or\
-         algos_name == "dtqn" or\
+    if   algos_name == "dqn" or\
+         algos_name == "nstep" or\
+         algos_name == "dtqn_eps" or\
          algos_name == "dtqn_per_noisy" or\
          algos_name == "dtqn_per" or\
          algos_name == "dtqn_step_per" or\
@@ -172,7 +176,9 @@ def main_fn(
     success_count = 0
     env = GridGraph.GridGraph
     if algos == "dqn":
-        algos_fn = DQN
+        env = GridGraphV2.GridGraph     
+        algos_fn =  _1_DQN
+        # algos_fn = DQN
     elif algos == "ddqn":
         algos_fn = DDQN
     elif algos =="dddqn":
@@ -186,10 +192,10 @@ def main_fn(
     elif algos == "nstep":
         #! v2  is a new environ interface, only support in several algos
         env = GridGraphV2.GridGraph     
-        algos_fn =  _7_Duel_noisy_Nstep_nocat
-    elif algos == "dtqn":
+        algos_fn =  _7_DQN_rainbow_nocat
+    elif algos == "dtqn_eps":
         env = GridGraphV2.GridGraph     #! v2
-        algos_fn = _8_DTQN
+        algos_fn = _8_DTQN_epsilon
     elif algos == "dtqn_per":
         env = GridGraphV2.GridGraph     #! v2
         algos_fn = _9_DTQN_PER
@@ -205,6 +211,9 @@ def main_fn(
     elif algos == "dtqn_noisy_bf":
         env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _13_DTQN_noisy_bf
+    else:
+        raise Exception(f"error...algos {algos} doesn't exist") 
+
     if run_benchmark_num == None:
         run_benchmark_num = len(src_benchmark_file)
     run_benchmark_num = min(run_benchmark_num,len(src_benchmark_file))

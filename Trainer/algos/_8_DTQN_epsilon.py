@@ -78,7 +78,7 @@ class ReplayBuffer:
     self.acts_buf[episode_idx, obs_idx] = act  
     self.rews_buf[episode_idx, obs_idx] = rew
     self.done_buf[episode_idx, obs_idx] = done
-    self.episode_lengths[episode_idx] = episode_len   #?????????/
+    self.episode_lengths[episode_idx] = episode_len   
     self.ptr = [self.ptr[0], self.ptr[1] + 1]
     self.size = min(self.size + 1, self.frame_size)
   def initialize_episode_buffer(self, obs: np.ndarray) -> None:  
@@ -87,7 +87,7 @@ class ReplayBuffer:
     self.initialize_episode(episode_idx)  #*  reset episode
     self.obs_buf[episode_idx, 0] = obs
   def can_sample(self) -> bool:
-      return self.batch_size < self.ptr[0]
+      return self.ptr[0] > self.batch_size  
   def point_to_next_episode(self):   #*** go to next episode
       self.ptr = [self.ptr[0] + 1, 0]
   def initialize_episode(self, episode_idx: int) -> None:  #* reset episode
@@ -131,7 +131,7 @@ class ReplayBuffer:
 class DQN_Agent(): 
   def __init__(self, gridgraph,hid_layer,emb_dim,
                self_play_episode_num=150,context_len=5):
-    print("----DTQN_agent---")
+    print("----DTQN_epsilon_agent---")
     self.context_len = context_len 
     self.env = gridgraph
     self.action_size = self.env.action_size  #6
@@ -166,11 +166,19 @@ class DQN_Agent():
       return np.random.randint(self.action_size) #todo self.num_action
     context_obs_tensor = tc.FloatTensor( #50
           self.context.obs[: min(self.context.max_length, self.context.timestep + 1)],
-      ).unsqueeze(0).to(device)   #todo investigate the shape  so  seq_len range from 1 to 50,  means output of transformer also range from 1 to 50 ??
+    ).unsqueeze(0).to(device)   #todo investigate the shape  so  seq_len range from 1 to 50,  means output of transformer also range from 1 to 50 ??
     q_values = self.dqn(context_obs_tensor)
     return tc.argmax(q_values[:, -1, :]).item()   #argmax(1,-1,action_dim)  #todo  the shape
   def update_model(self,):
-    samples = self.replay.sample_batch()       
+    samples = self.replay.sample_batch()   
+    loss = self._compute_dqn_loss(samples)    
+    self.optim.zero_grad()
+    loss.backward()
+    self.optim.step()
+    self.num_train_steps+=1
+    if self.num_train_steps % self.target_update_frequency == 0:
+        self.dqn_target.load_state_dict(self.dqn.state_dict())
+  def _compute_dqn_loss(self,samples: Dict[str,np.ndarray])->tc.Tensor:
     b_obs = tc.FloatTensor(samples["obs"]).to(device)
     b_obs_next = tc.FloatTensor(samples["next_obs"]).to(device)
     b_action =tc.LongTensor(samples["acts"]).to(device)  # action
@@ -191,15 +199,10 @@ class DQN_Agent():
     q_values = q_values[:, -self.context_len :]
     targets = targets[:, -self.context_len :]  
     loss = self.criterion(q_values,targets)
-    self.optim.zero_grad()
-    loss.backward()
-    self.optim.step()
-    self.num_train_steps+=1
-    if self.num_train_steps % self.target_update_frequency == 0:
-        self.dqn_target.load_state_dict(self.dqn.state_dict())
-  def train(self,
-	   	twoPinNumEachNet,  
-	   	netSort:list,  # ---netsort [0, 7, 17, 15, 4, 3, 1, ...,8, 18] len 20---
+    return loss
+
+  def train(self,	twoPinNumEachNet,  
+	  netSort:list,  # ---netsort [0, 7, 17, 15, 4, 3, 1, ...,8, 18] len 20---
     ckpt_path,
     logger, save_ckpt=False, load_ckpt= True,
     early_stop=False,
@@ -211,7 +214,7 @@ class DQN_Agent():
     for episode in range(self.max_episodes):	
       self.result.init_episode(agent=self)
       for pin in range(twoPinNum):
-        state = self.env.reset(pin)     #*  New loop!
+        state = self.env.reset(pin) 
         obs = self.env.state2obsv()
         self.context.reset(obs)  #  context_reset(env.reset())
         self.replay.initialize_episode_buffer(obs)   

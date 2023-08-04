@@ -93,10 +93,6 @@ class QNetwork(nn.Module):
     for j in range(hid_layer-1):
        layers+=[nn.Linear(emb_dim,emb_dim), nn.ReLU()]
     self.feature_layer = nn.Sequential(
-      #  nn.Linear(obs_size,lay[0]), nn.ReLU(),
-      #  nn.Linear(lay[0],lay[1]),nn.ReLU(),
-      #  nn.Linear(lay[1],lay[2]),nn.ReLU(),
-      #  nn.Linear(lay[2],lay[3]),nn.ReLU(),
       *layers
     )
     

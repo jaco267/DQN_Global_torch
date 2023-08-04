@@ -306,7 +306,7 @@ class DQN_Agent():
 	   	twoPinNumEachNet,  # len = netNum in one file = 20 , value = netPinNum - 1  ex. [3, 2, 2, 1, 4, 2, 3,..., 4]
 	   	netSort:list,  # ---netsort [0, 7, 17, 15, 4, 3, 1, ...,8, 18] len 20---
 	   	savepath,  #"../model_(train/test)"   #model will be saved to ../model/
-		model_file=None  # if model_file = None, training; if given, testing  #* if testing using training function, comment burn_in in Router.py
+		  model_file=None  # if model_file = None, training; if given, testing  #* if testing using training function, comment burn_in in Router.py
     ):           
         if os.path.exists(f"{savepath}model.ckpt"):  #load chpt
             print(f"loading {savepath}model.ckpt")

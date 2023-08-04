@@ -227,33 +227,35 @@ class Context:
 class DQN_Agent(): 
   def __init__(self, gridgraph,hid_layer=1,emb_dim=64,self_play_episode_num=20,context_len=5):
     print(f"----DTQN_normal_noisy_agent--context_len {context_len}-")
-    self.context_len = context_len 
+    #**  environment 
     self.env = gridgraph
     self.action_size = self.env.action_size  #6
     obs_size = self.env.obs_size        #12
     env_max_step = self.env.max_step  #100
+    #** network
+    # transformer net
+    self.context_len = context_len 
+    self.context = Context(context_len,self.action_size,obs_size)
+    # Q network
     self.dqn = QNetwork(obs_size,self.action_size,embed_dim=emb_dim,
                         context_len=context_len,hid_layers=hid_layer,).to(device)
     self.dqn_target = QNetwork(obs_size,self.action_size,embed_dim=emb_dim,
                         context_len=context_len,hid_layers=hid_layer,).to(device)
     self.dqn_target.load_state_dict(self.dqn.state_dict())
     self.dqn_target.eval()
-    #** PER
-    self.beta = 0.6   #* from 0.6 to 1 # importance sampling at the end   
-    alpha = 0.2   #* temperature  (lower the alpha, closer to uniform)
-    self.prior_eps = 1e-6 #* guarentees every transition can be sampled
+    #** replay buffer
     self.replay = ReplayBuffer(
         obs_dim=obs_size,context_len=context_len,env_max_steps=env_max_step)
+    #** explore
     # NoisyNet: All attributes related to epsilon are removed
+    #** training
     self.gamma = 0.95
-    self.max_episodes = self_play_episode_num    #20 #200#10000 #20000
     self.batch_size = 32
-    
+    self.max_episodes = self_play_episode_num    #150
     self.grad_norm_clip = 1.0
     self.num_train_steps = 0
     self.target_update_frequency = 100 #update target network every 100 steps
-    self.optim = tc.optim.Adam(self.dqn.parameters(),lr=0.0001)
-    self.context = Context(context_len,self.action_size,obs_size)
+    self.optim = tc.optim.Adam(self.dqn.parameters(),lr=0.0001)    
     self.criterion = nn.MSELoss(reduction="none")
     #** training results   (used in resultUtils.py)
     self.result = U.Result() 
@@ -278,7 +280,6 @@ class DQN_Agent():
     self.optim.step()
     # PER: update priorities
     loss_for_prior = elementwise_loss.detach().cpu().numpy()
-    new_priorities = loss_for_prior + self.prior_eps  
     #* PER larger the loss, larger the priorities
     # self.replay.update_priorities(indices, new_priorities)
     self.num_train_steps+=1
@@ -308,7 +309,6 @@ class DQN_Agent():
     targets = targets[:, -self.context_len :]  
     elementwise_loss = tc.mean(self.criterion(q_values,targets),dim=-1) #*no mean at batch
     return elementwise_loss
-
   def train(self,
     twoPinNumEachNet,  # len = netNum in one file = 20 , value = netPinNum - 1  ex. [3, 2, 2, 1, 4, 2, 3,..., 4]
     netSort:list,  # ---netsort [0, 7, 17, 15, 4, 3, 1, ...,8, 18] len 20---
@@ -322,14 +322,9 @@ class DQN_Agent():
       U.load_ckpt_or_pass(self,ckpt_path)
     results = {	'solutionDRL':[], 'reward_plot_combo': [],	'reward_plot_combo_pure': [],}
     twoPinNum = len(self.env.twopin_combo)
-    frames_i = 0
-    num_frames = self.max_episodes*twoPinNum
     for episode in range(self.max_episodes):	
       self.result.init_episode(agent=self)
       for pin in range(twoPinNum):                     #,
-        #* PER: increase beta (importance sampling)
-        fraction = min(frames_i/num_frames,1.0)
-        self.beta = self.beta + fraction * (1.0 - self.beta)  #beta ~ 1
         state = self.env.reset(pin)     #,
         obs = self.env.state2obsv()
         self.context.reset(obs) #context_reset(env.reset())
@@ -348,7 +343,6 @@ class DQN_Agent():
           if self.replay.can_sample():  
             self.update_model()
         self.replay.point_to_next_episode()  #**replay got to next episode
-        frames_i+=1
         self.result.update_pin_result(rewardfortwopin,self.env.route)
       self.result.end_episode(self,logger,episode,results,twoPinNum)
       if early_stop == True:  #pre-training mode 

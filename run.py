@@ -3,15 +3,12 @@ import fire
 import yaml
 import json 
 import Trainer
-def main(algos="dtqn",
+def main(algos="dtqn_noisy",
          mode="eval",
          wandbName=None,
          enable_wandb=None,
          run_benchmark_num=None):
-    algos_list = ['dqn','dtqn','nstep','dtqn_noisy']
     mode_list =  ['eval','train'] 
-    if algos not in algos_list:
-        raise Exception(f'algo should be in {algos_list}') 
     if mode not in mode_list:
         raise Exception(f'mode should be in {mode_list}') 
     config_dict = {}
