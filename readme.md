@@ -8,7 +8,7 @@ Original implementation is in [this repo](https://github.com/haiguanl/DQN_Global
 To train the agent, first generate the train and eval dataset
 ```sh
 # train data
-python gen_data.py --benchmarkNumber 5 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./train_data_/
+python gen_data.py --benchmarkNumber 50 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./train_data_/
 # test data
 python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./test_data_/
 ```       
