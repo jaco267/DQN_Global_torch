@@ -12,9 +12,9 @@ from torch.nn.utils import clip_grad_norm_
 np.random.seed(10701)
 random.seed(10701)
 device = tc.device("cuda" if tc.cuda.is_available() else "cpu")
-from net_utils import DTQN_noisy_net
-from replay_buffer import Episode_ReplayBuffer
-from data_context import Context
+from Trainer.algos.net_utils import DTQN_noisy_net
+from Trainer.algos.replay_buffer import Episode_ReplayBuffer
+from Trainer.algos.data_context import Context
 
 class DQN_Agent(): 
   def __init__(self, gridgraph,hid_layer=1,emb_dim=64,self_play_episode_num=20,context_len=5):
@@ -24,12 +24,12 @@ class DQN_Agent():
     self.action_size = self.env.action_size  #6
     obs_size = self.env.obs_size        #12
     env_max_step = self.env.max_step  #100
-    self.dqn = DTQN_noisy_net(obs_size,self.action_size,embed_dim=emb_dim,
+    self.net = DTQN_noisy_net(obs_size,self.action_size,embed_dim=emb_dim,
                         context_len=context_len,hid_layers=hid_layer,).to(device)
-    self.dqn_target = DTQN_noisy_net(obs_size,self.action_size,embed_dim=emb_dim,
+    self.net_target = DTQN_noisy_net(obs_size,self.action_size,embed_dim=emb_dim,
                         context_len=context_len,hid_layers=hid_layer,).to(device)
-    self.dqn_target.load_state_dict(self.dqn.state_dict())
-    self.dqn_target.eval()
+    self.net_target.load_state_dict(self.net.state_dict())
+    self.net_target.eval()
     #** PER
     self.beta = 0.6   #* from 0.6 to 1 # importance sampling at the end   
     alpha = 0.2   #* temperature  (lower the alpha, closer to uniform)
@@ -44,7 +44,7 @@ class DQN_Agent():
     self.grad_norm_clip = 1.0
     self.num_train_steps = 0
     self.target_update_frequency = 100 #update target network every 100 steps
-    self.optim = tc.optim.Adam(self.dqn.parameters(),lr=0.0001)
+    self.optim = tc.optim.Adam(self.net.parameters(),lr=0.0001)
     self.context = Context(context_len,self.action_size,obs_size)
     self.criterion = nn.MSELoss(reduction="none")
     #** training results   (used in resultUtils.py)
@@ -55,7 +55,7 @@ class DQN_Agent():
     context_obs_tensor = tc.FloatTensor( #50
           self.context.obs[: min(self.context.max_length, self.context.timestep + 1)],
       ).unsqueeze(0).to(device)   #todo investigate the shape  so  seq_len range from 1 to 50,  means output of transformer also range from 1 to 50 ??
-    q_values = self.dqn(context_obs_tensor)
+    q_values = self.net(context_obs_tensor)
     return tc.argmax(q_values[:, -1, :]).item()   #argmax(1,-1,action_dim)  #todo  the shape
   def update_model(self,):
     samples = self.replay.sample_batch()       
@@ -63,7 +63,7 @@ class DQN_Agent():
     loss = tc.mean(elementwise_loss )  #importance sampling
     self.optim.zero_grad()
     loss.backward()
-    clip_grad_norm_(self.dqn.parameters(), 10.0)
+    clip_grad_norm_(self.net.parameters(), 10.0)
     self.optim.step()
     # PER: update priorities
     loss_for_prior = elementwise_loss.detach().cpu().numpy()
@@ -73,11 +73,11 @@ class DQN_Agent():
     self.num_train_steps+=1
 
     # NoisyNet: reset noise
-    self.dqn.reset_noise()
-    self.dqn_target.reset_noise()
+    self.net.reset_noise()
+    self.net_target.reset_noise()
     #
     if self.num_train_steps % self.target_update_frequency == 0:
-        self.dqn_target.load_state_dict(self.dqn.state_dict())
+        self.net_target.load_state_dict(self.net.state_dict())
   def _compute_dqn_loss(self,samples: Dict[str,np.ndarray])->tc.Tensor:
     b_obs = tc.FloatTensor(samples["obs"]).to(device)
     b_obs_next = tc.FloatTensor(samples["next_obs"]).to(device)
@@ -85,11 +85,11 @@ class DQN_Agent():
     b_reward = tc.FloatTensor(samples["rews"]).to(device)  # reward
     b_done = tc.FloatTensor(samples["done"]).to(device) # is term
     
-    q_batch = self.dqn(b_obs)# action generate by q_batch
+    q_batch = self.net(b_obs)# action generate by q_batch
     q_values = q_batch.gather(2,b_action).squeeze()
     with tc.no_grad():  #* trainable false
-      q_batch_next = self.dqn_target(b_obs_next).gather(#ddqn # [batch-size x hist-len x n-actions] 
-         2, self.dqn(b_obs_next).argmax(dim=2).unsqueeze(-1)
+      q_batch_next = self.net_target(b_obs_next).gather(#ddqn # [batch-size x hist-len x n-actions] 
+         2, self.net(b_obs_next).argmax(dim=2).unsqueeze(-1)
       ).squeeze()
       # print(b_reward.shape,q_batch_next.shape,b_done.shape)
       targets = b_reward.squeeze()+self.gamma*q_batch_next*(1-b_done.squeeze())

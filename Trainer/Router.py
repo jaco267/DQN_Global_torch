@@ -11,7 +11,9 @@ import operator
 
 import wandb
 
-from Trainer.algos import DQN
+
+from Trainer.algos import _0_general_agent
+
 from Trainer.algos import DDQN
 from Trainer.algos import Dueling_DDQN
 from Trainer.algos import Duel_DDQN_PER
@@ -34,6 +36,7 @@ from Trainer import Router_save_utils as save_utils
 from Trainer import GridGraph
 from Trainer import GridGraphV2
 from datetime import datetime
+import importlib
 np.random.seed(10701);  random.seed(10701);
 def saveResults():
     return
@@ -179,42 +182,40 @@ def main_fn(
     src_benchmark_file = [li for li in os.listdir(benchmark_reduced_path) if "rewardData" not in li]
     #*  ex. test_benchmark_1.gr,  test_benchmark_2.gr .....
     success_count = 0
-    env = GridGraph.GridGraph
-    if algos == "dqn":
-        env = GridGraphV2.GridGraph     
+    
+    env = GridGraphV2.GridGraph  #! v2  is a new environ interface, only support in several algos
+    if algos == "general":     
+        algos_fn =  _0_general_agent
+    if algos == "dqn":     
         algos_fn =  _1_DQN
-        # algos_fn = DQN
     elif algos == "ddqn":
+        env = GridGraph.GridGraph
         algos_fn = DDQN
     elif algos =="dddqn":
+        env = GridGraph.GridGraph
         algos_fn = Dueling_DDQN
     elif algos =="dddqn_PER":
+        env = GridGraph.GridGraph
         algos_fn = Duel_DDQN_PER
     elif algos == "noisy":
+        env = GridGraph.GridGraph
         algos_fn = _5_Duel_DDQN_PER_noisy
     elif algos == "categorical":
+        env = GridGraph.GridGraph
         algos_fn = _6_PER_noisy_categorical
-    elif algos == "nstep":
-        #! v2  is a new environ interface, only support in several algos
-        env = GridGraphV2.GridGraph     
+    elif algos == "nstep":  
         algos_fn =  _7_DQN_rainbow_nocat
     elif algos == "dtqn":
-        env = GridGraphV2.GridGraph     #! v2
         algos_fn = _8_DTQN_epsilon
     elif algos == "dtqn_per":
-        env = GridGraphV2.GridGraph     #! v2
         algos_fn = _9_DTQN_PER
     elif algos == "dtqn_per_noisy":  #** episode per
-        env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _10_DTQN_PER_noisy
     elif algos == "dtqn_step_per":
-        env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _11_DTQN_step_PER_noisy
     elif algos == "dtqn_noisy":
-        env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _12_DTQN_noisy
     elif algos == "dtqn_noisy_bf":
-        env = GridGraphV2.GridGraph     #! v2
         algos_fn =  _13_DTQN_noisy_bf
     else:
         raise Exception(f"error...algos {algos} doesn't exist") 

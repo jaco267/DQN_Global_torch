@@ -16,7 +16,7 @@ python gen_data.py --benchmarkNumber 50 --gridSize 8 --netNum 20 --vCap 4  --hCa
 python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./test_data_/
 ```       
 ## start training 
-default options is in configs.yaml, you can modify it directly or overwrite it through command line
+default options is in configs.yaml (or Trainer/Router.py main_fn()), you can modify it directly or overwrite it through command line
 
 args
 - algos:str  ( algos name are all in Trainer/Router.py)
