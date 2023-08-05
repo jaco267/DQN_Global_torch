@@ -226,7 +226,7 @@ class GridGraph(object):
         elif self.current_step >= self.max_step:
             # reward = 0   #-200
             done = True
-            # print("fail to complet,  step==max_step : ", self.current_step)
+            # print("fail to complete,  step==max_step : ", self.current_step)
             self.route.append((self.current_state[3], self.current_state[4], self.current_state[2],
                                self.current_state[0], self.current_state[1]))
         

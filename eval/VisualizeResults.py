@@ -52,9 +52,10 @@ if __name__ == '__main__':
 	# print(DRL_data[:,0].reshape(-1,1),"???",Astar_data[:,0].reshape(-1,1),">>>")
 	of_data = np.hstack((DRL_data[:,0].reshape(-1,1),Astar_data[:,0].reshape(-1,1)))
 	wl_data = np.hstack((DRL_data[:,1].reshape(-1,1),Astar_data[:,1].reshape(-1,1)))
-
+	
 	wl_data_list = wl_data.tolist(); of_data_list = of_data.tolist()
-
+	# print(wl_data_list,'wl')
+	# print(of_data_list,'of')
 	# # Sort data w.r.t. DRL or A* result
 	wl_data_list.sort(key=lambda x: x[0]); of_data_list.sort(key=lambda x: x[0])
 	wl_data_arrayDRLsort = np.asarray(wl_data_list)

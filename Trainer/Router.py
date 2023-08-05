@@ -87,7 +87,7 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     #* print("----start training---")
     if   algos_name == "dqn" or\
          algos_name == "nstep" or\
-         algos_name == "dtqn_eps" or\
+         algos_name == "dtqn" or\
          algos_name == "dtqn_per_noisy" or\
          algos_name == "dtqn_per" or\
          algos_name == "dtqn_step_per" or\
@@ -133,6 +133,7 @@ class Print_log:
         pass
 def main_fn(
         algos="dtqn_per_noisy",
+        mode="train",  #train, eval
         hid_layer=1, emb_dim=64,
         context_len = 5,   #try other numbers 1~30,  I known 50 is bad and slow
         early_stop=False,
@@ -142,6 +143,7 @@ def main_fn(
         enable_wandb=True, wandbName="",    
         data_folder='train_data_/benchmark_reduced',
         run_benchmark_num = None,
+        verbose = False
     ):
     print(">>>>>>>>>>>>>>>\n",locals())
     if enable_wandb:
@@ -149,19 +151,22 @@ def main_fn(
         project_name = "Global_route"
         config={
                 "algos":algos,
-                "load":load_ckpt,
-                "save":save_ckpt,
+                "mode":mode,
                 "layer":hid_layer,
                 "emb_dim":emb_dim,
                 "episode":self_play_episode_num,
                 "context_len":context_len
         }
-        wandb.init(
-            project=project_name,
-            name = timestamp(),
+        if verbose:
             group = wandbName+"_"+"_".join(
                 [f"{key}={val}" for key, val in config.items()]
             ),
+        else:
+            group = f"{algos}_{mode}"
+        wandb.init(
+            project=project_name,
+            name = timestamp(),
+            group = group,
             config=config,
         )    
         logger = wandb
@@ -193,7 +198,7 @@ def main_fn(
         #! v2  is a new environ interface, only support in several algos
         env = GridGraphV2.GridGraph     
         algos_fn =  _7_DQN_rainbow_nocat
-    elif algos == "dtqn_eps":
+    elif algos == "dtqn":
         env = GridGraphV2.GridGraph     #! v2
         algos_fn = _8_DTQN_epsilon
     elif algos == "dtqn_per":

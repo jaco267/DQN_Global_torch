@@ -1,15 +1,3 @@
-
-'''
-#https://github.com/kevslinger/DTQN
-@article{esslinger2022dtqn,
-  title = {Deep Transformer Q-Networks for Partially Observable Reinforcement Learning},
-  author = {Esslinger, Kevin and Platt, Robert and Amato, Christopher},
-  journal= {arXiv preprint arXiv:2206.01078},
-  year = {2022},
-}
-'''
-print("-------gggggiiiiitttt---------")
-#*** hmmm,   maybe sample from episode is just better than sample from pin
 import numpy as np
 import torch as tc
 from torch import nn

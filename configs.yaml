@@ -12,12 +12,14 @@ default:
     early_stop: False
     result_dir: solutionsDRL
   train:
+    mode: train
     load_ckpt: True
     save_ckpt: True
     self_play_episode_num: 4
     enable_wandb: True
     data_folder:  train_data_/benchmark_reduced
   eval:
+    mode: eval
     load_ckpt: True
     save_ckpt: False
     self_play_episode_num: 150
