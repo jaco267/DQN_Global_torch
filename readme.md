@@ -3,7 +3,10 @@ In this repo, I used [Deep Transformer Q-Networks ](https://github.com/kevslinge
 The global routing benchmark generator is from the paper ["A Deep Reinforcement Learning Approach for Global Routing"](https://arxiv.org/pdf/1906.08809.pdf).     
 Original implementation is in [this repo](https://github.com/haiguanl/DQN_GlobalRouting).
 
-
+## scripts to generate data, training, and plot figures
+```sh
+python scripts/get_data_and_train.py
+```
 ## Generate Dataset
 To train the agent, first generate the train and eval dataset
 ```sh
