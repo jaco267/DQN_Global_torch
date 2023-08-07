@@ -56,7 +56,7 @@ python VisualizeResults.py
 ``` 
 will generate wirelen images in ./eval/VisualizeResult.
  
-<img src="assets/dtqn_wirelength.png" alt= “” width="800px" >
+<img src="assets/dtqn_wirelength.png" alt= “” width="500px" >
 
 ### Differences from the original implementation
 The [original implementation](https://github.com/haiguanl/DQN_GlobalRouting) used A* memory burn-in to speed up training.
@@ -100,11 +100,11 @@ dtqn have higher reward than dqn
 
 #### wire length
 compare dqn wire length with A* algorithm (0.52 winning rate) (with 19/20 pins)
-<img src="assets/dqn_wirelen.png" alt= “” width="800px" >
+<img src="assets/dqn_wirelen.png" alt= “” width="500px" >
 
 
 compare dtqn wire length with A* algorithm (0.7 winning rate) (with 20/20 pins)
-<img src="assets/dtqn_wirelength.png" alt= “” width="800px" >
+<img src="assets/dtqn_wirelength.png" alt= “” width="500px" >
 
 
 
