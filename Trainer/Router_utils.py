@@ -1,15 +1,9 @@
 from __future__ import print_function
 
 import matplotlib;   matplotlib.use('TkAgg');
-import matplotlib.pyplot as plt;
 
-from Trainer import GridGraph as graph
-from Trainer import Initializer as init
+from Trainer import GridGraphV2 as graph
 from Trainer import MST as tree
-
-
-import operator
-
 
 def gen_2pinListClear(gridParameters):
     twopinListComboCleared = []

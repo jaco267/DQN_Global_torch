@@ -19,8 +19,8 @@ python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCa
 default options is in configs.yaml (or Trainer/Router.py main_fn), you can modify it in yaml or overwrite it through command line interface
 
 command line (or yaml) args
-- algos:str  ( algos name are all in Trainer/Router.py)
-  - dqn, dtqn, 
+- algos:str  ( algos names are the filenames in Trainer/algos/agent folder)
+  - dqn, dtqn, rainbow_dqn
 - wandbName:str
 - hid_layer:int = 3
 - emb_dim:int = 64

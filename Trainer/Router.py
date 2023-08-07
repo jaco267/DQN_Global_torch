@@ -14,7 +14,6 @@ from Trainer import Initializer as init
 
 from Trainer import Router_utils as utils
 from Trainer import Router_utils_plt as save_utils
-from Trainer import GridGraph
 from Trainer import GridGraphV2
 from datetime import datetime
 import importlib
@@ -70,14 +69,7 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     #!!!  core  DQN_implement.py
     success = 0
     #* print("----start training---")
-    if algos_name in ['ddqn','d3qn','d3qn_per','d3qn_per_noisy','d3qn_per_noisy_cat']:
-        agent = algos_fn.DQN_Agent( Env_graph,self_play_episode_num)  
-        results, solutionTwoPin,posTwoPinNum = agent.train(
-                                    twoPinEachNetClear,
-                                    netSort,
-                                    ckpt_folder,
-                    )
-    elif algos_name in ['rainbow_dqn']:
+    if algos_name in ['rainbow_dqn']:
         print(algos_name,">>>>>>>")
         agent = algos_fn.DQN_Agent( env=Env_graph, rainbow_mode=rainbow_mode, hid_layer=hid_layer,
         emb_dim=emb_dim, self_play_num =self_play_episode_num, context_len=context_len,)  
@@ -191,10 +183,7 @@ def main_fn(
     #*  ex. test_benchmark_1.gr,  test_benchmark_2.gr .....
     success_count = 0
     
-    env = GridGraphV2.GridGraph  #! v2  is a new environ interface, only support in several algos
-    if algos in ['ddqn','d3qn','d3qn_per','d3qn_per_noisy','d3qn_per_noisy_cat']:
-        env = GridGraph.GridGraph
- 
+    env = GridGraphV2.GridGraph 
     algos_fn = importlib.import_module(f'Trainer.algos.agent.{algos}')
     print(algos_fn.__name__,"...algos module name...")
 
