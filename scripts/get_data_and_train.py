@@ -4,7 +4,7 @@ def c(cmd_str):
     os.system(cmd_str)
 def generate_train_eval_data():
     print("---generating train data---")
-    c('python gen_data.py --benchmarkNumber 50 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./train_data_/')
+    c('python gen_data.py --benchmarkNumber 30 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./train_data_/')
 
     print("\n---generating test data---")
     c('python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./test_data_/')
