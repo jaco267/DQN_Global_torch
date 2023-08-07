@@ -113,7 +113,8 @@ compare dtqn wire length with A* algorithm (0.7 winning rate) (with 20/20 pins)
 - merge rainbow into one file
 - translate eval2008.pl to python
 - json format for netlist
-## run rainbow (not finished)
+## run rainbow 
+In the current setting, only double dqn can improve the performance.
 ```sh
 python run.py --mode "train" --algos rainbow_dqn --enable_wandb True --rainbow_mode double,nstep 
 python run.py --mode "eval" --algos rainbow_dqn --enable_wandb True --rainbow_mode double,nstep   
