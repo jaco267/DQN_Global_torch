@@ -138,9 +138,9 @@ def main_fn(
     
     print(">>>>>>>>>>>>>>>\n",locals())
     algos_name = algos
+    rain_dict = {}
     if 'rainbow' in algos:
         stardard_rainbow_list = ['double','duel','noisy','per','cat','nstep']
-        rain_dict = {}
         for r_mode in stardard_rainbow_list:
             if r_mode in rainbow_mode:
                 rain_dict[r_mode] = True
