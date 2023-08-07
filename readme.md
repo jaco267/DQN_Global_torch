@@ -39,8 +39,8 @@ python run.py --mode "train" --algos dtqn
 # python run.py --mode "train" --algos dqn
 ```
 ## Step3. start eval
-eval run the 20 test benchmark, each with 150 self-play number (set in configs.yaml),
-eval will takes longer time to run (about 1hr on a RTX3060 GPU)
+eval run the 20 test benchmark, each with 150 self-play number (in configs.yaml),
+eval will take longer time to run (about 1hr on a RTX3060 GPU)
 ```sh
 python run.py --mode "eval" --algos dtqn
 # python run.py --mode "eval" --algos dqn
