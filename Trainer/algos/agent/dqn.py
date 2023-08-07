@@ -1,6 +1,3 @@
-
-#!/usr/bin/env python
-
 import numpy as np
 import torch as tc
 from torch import nn
@@ -66,7 +63,7 @@ class ReplayBuffer:
     return self.size
 class DQN_Agent(): 
     def __init__(self, gridgraph,hid_layer=1,emb_dim=64,self_play_episode_num=150,context_len=5):
-      print("----DQN_agent---")
+      print("----DQN_agenthaha---")
         # as well as training parameters - number of episodes / iterations, etc.
       self.env = gridgraph
       self.action_size = self.env.action_size  #6

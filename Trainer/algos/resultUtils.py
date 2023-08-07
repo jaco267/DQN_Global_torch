@@ -10,7 +10,7 @@ class Result():
         # whole benchmark
         self.best_route = []  #solutions
         self.best_reward = 0.0
-        self.PosTwoPinNum = 0#connected pin ex.43/50 32=PosTwoPinNum  50==total_pin=twopin_combo
+        self.PosTwoPinNum = -1#connected pin ex.43/50 32=PosTwoPinNum  50==total_pin=twopin_combo
     def update_episode_reward(self,reward):
         self.episode_reward += reward
     def update_pin_result(self,rewardfortwopin,route):

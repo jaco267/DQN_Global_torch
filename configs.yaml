@@ -16,6 +16,7 @@ default:
     load_ckpt: True
     save_ckpt: True
     self_play_episode_num: 4
+    run_benchmark_num: 30
     enable_wandb: True
     data_folder:  train_data_/benchmark_reduced
   eval:

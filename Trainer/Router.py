@@ -5,34 +5,15 @@ import matplotlib;   matplotlib.use('TkAgg');
 import numpy as np
 import random
 import os
-import time
 import random
 import operator
 
 import wandb
 
-
-from Trainer.algos import _0_general_agent
-
-from Trainer.algos import DDQN
-from Trainer.algos import Dueling_DDQN
-from Trainer.algos import Duel_DDQN_PER
-
-from Trainer.algos import _1_DQN
-from Trainer.algos import _5_Duel_DDQN_PER_noisy
-from Trainer.algos import _6_PER_noisy_categorical
-from Trainer.algos import _7_DQN_rainbow_nocat
-
-from Trainer.algos import _8_DTQN_epsilon
-from Trainer.algos import _9_DTQN_PER
-from Trainer.algos import _10_DTQN_PER_noisy
-from Trainer.algos import _11_DTQN_step_PER_noisy
-from Trainer.algos import _12_DTQN_noisy
-from Trainer.algos import _13_DTQN_noisy_bf
 from Trainer import Initializer as init
 
 from Trainer import Router_utils as utils
-from Trainer import Router_save_utils as save_utils
+from Trainer import Router_utils_plt as save_utils
 from Trainer import GridGraph
 from Trainer import GridGraphV2
 from datetime import datetime
@@ -56,7 +37,8 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                     early_stop,
                     ckpt_folder,
                     emb_dim,
-                    context_len):
+                    context_len,
+                    rainbow_mode):
     #* print("---data preprocessing---")
     # # Getting Net Info
     grid_info = init.read(filename)
@@ -80,7 +62,7 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     #* print("---DRL Module from here---")
     os.makedirs(ckpt_folder,exist_ok=True);  
                                                 
-    graphcase = env(gridParameters,
+    Env_graph = env(gridParameters,
                                 max_step=100,   #?20
                                 twopin_combo=twopinlist_nonet,
                                 net_pair=twoPinEachNetClear) 
@@ -88,16 +70,29 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     #!!!  core  DQN_implement.py
     success = 0
     #* print("----start training---")
-    if   algos_name == "dqn" or\
-         algos_name == "nstep" or\
-         algos_name == "dtqn" or\
-         algos_name == "dtqn_per_noisy" or\
-         algos_name == "dtqn_per" or\
-         algos_name == "dtqn_step_per" or\
-         algos_name == "dtqn_noisy" or\
-         algos_name == "dtqn_noisy_bf":
+    if algos_name in ['ddqn','d3qn','d3qn_per','d3qn_per_noisy','d3qn_per_noisy_cat']:
+        agent = algos_fn.DQN_Agent( Env_graph,self_play_episode_num)  
+        results, solutionTwoPin,posTwoPinNum = agent.train(
+                                    twoPinEachNetClear,
+                                    netSort,
+                                    ckpt_folder,
+                    )
+    elif algos_name in ['rainbow_dqn']:
         print(algos_name,">>>>>>>")
-        agent = algos_fn.DQN_Agent( graphcase, hid_layer,emb_dim,
+        agent = algos_fn.DQN_Agent( env=Env_graph, rainbow_mode=rainbow_mode, hid_layer=hid_layer,
+        emb_dim=emb_dim, self_play_num =self_play_episode_num, context_len=context_len,)  
+        results, solutionTwoPin,posTwoPinNum,success = agent.train(
+                            twoPinEachNetClear,
+                            netSort,
+                            ckpt_path=f"{ckpt_folder}{algos_name}.ckpt",
+                            logger=logger,
+                            save_ckpt=save_ckpt,
+                            load_ckpt=load_ckpt,
+                            early_stop=early_stop,
+            )
+    else:
+        print(algos_name,">>>>>>>")
+        agent = algos_fn.DQN_Agent( Env_graph, hid_layer,emb_dim,
                                    self_play_episode_num =self_play_episode_num,
                                    context_len=context_len)  
         results, solutionTwoPin,posTwoPinNum,success = agent.train(
@@ -109,17 +104,9 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
                             load_ckpt=load_ckpt,
                             early_stop=early_stop,
             )
-    else:
-        agent = algos_fn.DQN_Agent( graphcase,self_play_episode_num)  
-        results, solutionTwoPin,posTwoPinNum = agent.train(
-                                    twoPinEachNetClear,
-                                    netSort,
-                                    ckpt_folder,
-                    )
-        print("ffrrrrr",posTwoPinNum,".........")
     # print("======---saving results(Generate output file for DRL solver)---======") 
-    assert len(graphcase.twopin_combo)==len(twopinlist_nonet)
-    print(f"=====posTwoPinNum  {posTwoPinNum}/{len(graphcase.twopin_combo)}======")
+    assert len(Env_graph.twopin_combo)==len(twopinlist_nonet)
+    print(f"=====posTwoPinNum  {posTwoPinNum}/{len(Env_graph.twopin_combo)}======")
     if posTwoPinNum >= len(twopinlist_nonet): 
         save_utils.save(result_dir,globali,agent.max_episodes,gridParameters,
             results['reward_plot_combo'], results['reward_plot_combo_pure'],
@@ -129,13 +116,14 @@ def train_one_epoch(filename,  # benchmark_reduced/test_benchmark_i.gr
     return success
 
 class Print_log:
+    '''just a fake wandDB log (used when --enable_wandb=False)'''
     def __init__(self) -> None:
         pass
     def log(self,item):
         # print(item)
         pass
 def main_fn(
-        algos="dtqn_per_noisy",
+        algos="dtqn",
         mode="train",  #train, eval
         hid_layer=1, emb_dim=64,
         context_len = 5,   #try other numbers 1~30,  I known 50 is bad and slow
@@ -146,26 +134,46 @@ def main_fn(
         enable_wandb=True, wandbName="",    
         data_folder='train_data_/benchmark_reduced',
         run_benchmark_num = None,
-        verbose = False
-    ):
+        verbose = False,
+        rainbow_mode = ['double','nstep']#['double','duel','noisy','per','cat','nstep']
+    ):  
+    '''
+    [double] is nice (20/20),  
+    In the current setting [duel, noisy] are bad, 
+    todo : save replay ckpt when training (this will influence the beta update of PER)
+    #[double] at train and [double,per] at eval is still bad 
+    '''
+    
     print(">>>>>>>>>>>>>>>\n",locals())
+    algos_name = algos
+    if 'rainbow' in algos:
+        stardard_rainbow_list = ['double','duel','noisy','per','cat','nstep']
+        rain_dict = {}
+        for r_mode in stardard_rainbow_list:
+            if r_mode in rainbow_mode:
+                rain_dict[r_mode] = True
+                algos_name+= f'_{r_mode}' 
+            else:
+                rain_dict[r_mode] = False
+        print('rainbow_mode--->',rain_dict)
+        print('algos_name--->',algos_name)
     if enable_wandb:
         wandb.login()
         project_name = "Global_route"
         config={
-                "algos":algos,
+                "algos":algos_name,
                 "mode":mode,
                 "layer":hid_layer,
                 "emb_dim":emb_dim,
                 "episode":self_play_episode_num,
-                "context_len":context_len
+                "context_len":context_len,
         }
         if verbose:
             group = wandbName+"_"+"_".join(
                 [f"{key}={val}" for key, val in config.items()]
             ),
         else:
-            group = f"{algos}_{mode}"
+            group = f"{algos_name}_{mode}"
         wandb.init(
             project=project_name,
             name = timestamp(),
@@ -184,41 +192,11 @@ def main_fn(
     success_count = 0
     
     env = GridGraphV2.GridGraph  #! v2  is a new environ interface, only support in several algos
-    if algos == "general":     
-        algos_fn =  _0_general_agent
-    if algos == "dqn":     
-        algos_fn =  _1_DQN
-    elif algos == "ddqn":
+    if algos in ['ddqn','d3qn','d3qn_per','d3qn_per_noisy','d3qn_per_noisy_cat']:
         env = GridGraph.GridGraph
-        algos_fn = DDQN
-    elif algos =="dddqn":
-        env = GridGraph.GridGraph
-        algos_fn = Dueling_DDQN
-    elif algos =="dddqn_PER":
-        env = GridGraph.GridGraph
-        algos_fn = Duel_DDQN_PER
-    elif algos == "noisy":
-        env = GridGraph.GridGraph
-        algos_fn = _5_Duel_DDQN_PER_noisy
-    elif algos == "categorical":
-        env = GridGraph.GridGraph
-        algos_fn = _6_PER_noisy_categorical
-    elif algos == "nstep":  
-        algos_fn =  _7_DQN_rainbow_nocat
-    elif algos == "dtqn":
-        algos_fn = _8_DTQN_epsilon
-    elif algos == "dtqn_per":
-        algos_fn = _9_DTQN_PER
-    elif algos == "dtqn_per_noisy":  #** episode per
-        algos_fn =  _10_DTQN_PER_noisy
-    elif algos == "dtqn_step_per":
-        algos_fn =  _11_DTQN_step_PER_noisy
-    elif algos == "dtqn_noisy":
-        algos_fn =  _12_DTQN_noisy
-    elif algos == "dtqn_noisy_bf":
-        algos_fn =  _13_DTQN_noisy_bf
-    else:
-        raise Exception(f"error...algos {algos} doesn't exist") 
+ 
+    algos_fn = importlib.import_module(f'Trainer.algos.agent.{algos}')
+    print(algos_fn.__name__,"...algos module name...")
 
     if run_benchmark_num == None:
         run_benchmark_num = len(src_benchmark_file)
@@ -241,7 +219,8 @@ def main_fn(
                          early_stop=early_stop,
                          load_ckpt=load_ckpt,
                          emb_dim=emb_dim,
-                         context_len=context_len)
+                         context_len=context_len,
+                         rainbow_mode=rain_dict)
         success_count+=success
         logger.log({'success_count':success_count})
     return 

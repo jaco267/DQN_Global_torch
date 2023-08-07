@@ -16,19 +16,25 @@ python gen_data.py --benchmarkNumber 50 --gridSize 8 --netNum 20 --vCap 4  --hCa
 python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./test_data_/
 ```       
 ## start training 
-default options is in configs.yaml (or Trainer/Router.py main_fn()), you can modify it directly or overwrite it through command line
+default options is in configs.yaml (or Trainer/Router.py main_fn), you can modify it in yaml or overwrite it through command line interface
 
-args
+command line (or yaml) args
 - algos:str  ( algos name are all in Trainer/Router.py)
-  - dqn, dtqn_noisy, dtqn_eps, dtqn_per_noisy
+  - dqn, dtqn, 
 - wandbName:str
 - hid_layer:int = 3
 - emb_dim:int = 64
 - context_len:int = 5
 - early_stop:bool = False
 - result_dir:str = solutionsDRL
+- mode:str = 'train' || 'eval'
+- load_ckpt:bool
+- save_ckpt:bool
+- self_play_episode_num:int -> self play budget
+- enable_wandb:bool=True -> use wandb for plotting
+- data_folder:str -> netlist data to solve
 ```sh
-python run.py --mode "train" --algos dtqn --run_benchmark_num=30
+python run.py --mode "train" --algos dtqn
 ```
 ## start eval
 ```sh
@@ -107,3 +113,9 @@ compare dtqn wire length with A* algorithm (0.7 winning rate) (with 20/20 pins)
 - merge rainbow into one file
 - translate eval2008.pl to python
 - json format for netlist
+## run rainbow (not finished)
+```sh
+python run.py --mode "train" --algos rainbow_dqn --enable_wandb True --rainbow_mode double,nstep 
+python run.py --mode "eval" --algos rainbow_dqn --enable_wandb True --rainbow_mode double,nstep   
+```
+
