@@ -36,14 +36,12 @@ command line (or yaml) args
 - data_folder:str -> netlist data to solve
 ```sh
 python run.py --mode "train" --algos dtqn
-# python run.py --mode "train" --algos dqn
 ```
 ## Step3. start eval
 eval run the 20 test benchmark, each with 150 self-play number (in configs.yaml),
 eval will take longer time to run (about 1hr on a RTX3060 GPU)
 ```sh
 python run.py --mode "eval" --algos dtqn
-# python run.py --mode "eval" --algos dqn
 ```
 
 ## Step4. Go to wandb site to check the result
@@ -75,10 +73,16 @@ When self-play_episode_num is set to 50
 dqn can only complete 14/20 pin benchmarks,   
 while dtqn can complete all 20/20 pin benchmarks.  
 ```sh
+#### dqn #####
 #pretrain
-python run.py --mode "train" --algos dtqn||dqn --run_benchmark_num 30
+python run.py --mode "train" --algos dqn --run_benchmark_num 30
 #eval
-python run.py --mode "eval" --algos dtqn||dqn --self_play_episode_num 50
+python run.py --mode "eval" --algos  dqn --self_play_episode_num 50
+#### dtqn #####
+#pretrain
+python run.py --mode "train" --algos dtqn --run_benchmark_num 30
+#eval
+python run.py --mode "eval" --algos  dtqn --self_play_episode_num 50
 ``` 
 <img src="assets/successPin_selfplay50.png" alt= “” width="800px" >
 
