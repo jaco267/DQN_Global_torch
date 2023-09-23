@@ -1,7 +1,14 @@
-#  DTQN Global routing
-In this repo, I used [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN) to solve the Global routing problem, and found that dtqn can generalize better than DQN in the Global routing environment.   
-The global routing benchmark generator is from the paper ["A Deep Reinforcement Learning Approach for Global Routing"](https://arxiv.org/pdf/1906.08809.pdf).     
-Original implementation is in [this repo](https://github.com/haiguanl/DQN_GlobalRouting).
+#  DQN Global routing torch
+In this repo, I  reimplement [dqn global routing](https://github.com/haiguanl/DQN_GlobalRouting) in pytorch, and make the Q-network deeper to get better training results.    
+
+### Differences from original implementation
+- deeper network   
+The [original implementation](https://github.com/haiguanl/DQN_GlobalRouting/blob/master/GlobalRoutingRL/DQN_Implementation.py) uses only three hidden layers, this implementation uses a deeper architecture similar to resnet  (in Trainer/algos/agent/dqn.py) for better performance.    
+- remove memory burn-in     
+The original implemenation used A* memory burn-in to make the training faster, this implementation didn't used memory burn-in, but can still achieve 0.75  wire-length winning rate against A* algorithm. (with the help of deeper network) 
+- pretrain stage
+You can pretrain the agent to avoid training agent from scratch everytime in evaluation stage.
+
 
 # How to run?
 ## Step0. Install packages
@@ -35,21 +42,18 @@ command line (or yaml) args
 - enable_wandb:bool=True -> use wandb for plotting
 - data_folder:str -> netlist data to solve
 ```sh
-python run.py --mode "train" --algos dtqn
+python run.py --mode "train" --algos dqn --run_benchmark_num 30
 ```
 ## Step3. start eval
 eval run the 20 test benchmark, each with 150 self-play number (in configs.yaml),
 eval will take longer time to run (about 2hr on a RTX3060 GPU)
 ```sh
-python run.py --mode "eval" --algos dtqn
+python run.py --mode "eval" --algos dqn --self_play_episode_num 150
 ```
 
 ## Step4. Go to wandb site to check the result
-dtqn (pink) can solve 20/20 pin problem in 150 episode,  
-while dqn can only solve 19/20  
 
-<img src="assets/successPin_selfplay150.png" alt= “” width="800px" >
-<img src="assets/reward_selfplay150.png" alt= “” width="800px" >
+<img src="assets/dqn_reward.png" alt= “” width="800px" >
 
 ## Step5. plot wire len
 ```sh
@@ -57,73 +61,36 @@ cd eval
 python Evaluation.py 
 python VisualizeResults.py 
 ``` 
-will generate wirelen images in ./eval/VisualizeResult.
- 
-<img src="assets/dtqn_wirelength.png" alt= “” width="500px" >
+will generate wirelen images in ./eval/VisualizeResult.      
+    
+Compare dqn wire length with A* algorithm (0.75 winning rate) (lower is better)    
+<img src="assets/dqn_WLwithSortedAstar.png" alt= “” width="500px" >
 
-# Differences from the original implementation
-The [original implementation](https://github.com/haiguanl/DQN_GlobalRouting) used A* memory burn-in to speed up training.
-This implementation didn't use memory burn-in technique for simplicity. 
 
-# Compare DTQN with DQN
-DTQN can model the stochastic and partially observable environment better than dqn, making the pretrain more robust.  
-### Success count with 50 self-play budget 
-dqn needs more self-play budget to connect two pin, making it perform worse than dtqn under lower self-play evaluation budget(50)
-When self-play_episode_num is set to 50  
-dqn can only complete 14/20 pin benchmarks,   
-while dtqn can complete all 20/20 pin benchmarks.  
+### other algorithms
+#### DTQN
+To run [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN), change the algos option through command line.          
+dtqn has similar results compare to dqn.         
 ```sh
-#### dqn #####
-#pretrain
-python run.py --mode "train" --algos dqn --run_benchmark_num 30
-#eval
-python run.py --mode "eval" --algos  dqn --self_play_episode_num 50
-#### dtqn #####
-#pretrain
+## pretrain
 python run.py --mode "train" --algos dtqn --run_benchmark_num 30
-#eval
-python run.py --mode "eval" --algos  dtqn --self_play_episode_num 50
-``` 
-<img src="assets/successPin_selfplay50.png" alt= “” width="800px" >
-
-### 150 self-play budget
-#### success count
-dqn performs better when self-play budget is higher(success count 19/20), but still cannot solve all problems
-```sh
-#eval
-python run.py --mode "eval" --algos dtqn
-python run.py --mode "eval" --algos dqn 
-```  
-<img src="assets/successPin_selfplay150.png" alt= “” width="800px" >
-
-#### success rate
-dtqn can solve pin problem in smaller self-play number compare to dqn.  
-  
-<img src="assets/successRate_seflplay150.png" alt= “” width="800px" >
-   
-#### espisode reward
-dtqn have higher reward than dqn   
-<img src="assets/reward_selfplay150.png" alt= “” width="800px" >
-
-#### wire length
-compare dqn wire length with A* algorithm (0.52 winning rate) (with 19/20 pins)
-<img src="assets/dqn_wirelen.png" alt= “” width="500px" >
-
-
-compare dtqn wire length with A* algorithm (0.7 winning rate) (with 20/20 pins)
+## eval
+python run.py --mode "eval" --algos  dtqn --self_play_episode_num 150
+```
+##### DTQN result
+compare dtqn wire length with A* algorithm (0.7 winning rate)
 <img src="assets/dtqn_wirelength.png" alt= “” width="500px" >
 
 
-
-## Todo
-- Reward shaping for Overflow 
-- merge rainbow into one file
-- translate eval2008.pl to python
-- json format for netlist
-## run rainbow 
+<!-- #### rainbow 
 In the current setting, only double dqn can improve the performance.
 ```sh
 python run.py --mode "train" --algos rainbow_dqn --enable_wandb True --rainbow_mode double,nstep 
 python run.py --mode "eval" --algos rainbow_dqn --enable_wandb True --rainbow_mode double,nstep   
-```
+``` -->
 
+<!-- ## Todo
+- Reward shaping for Overflow 
+- merge rainbow into one file
+- translate eval2008.pl to python
+- json format for netlist -->
