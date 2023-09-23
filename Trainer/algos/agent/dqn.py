@@ -10,24 +10,44 @@ import Trainer.algos.resultUtils  as U
 np.random.seed(10701)
 random.seed(10701)
 device = tc.device("cuda" if tc.cuda.is_available() else "cpu")
+class HiddenLayer(nn.Module):
+   def __init__(self, emb_dim):
+      super().__init__()
+      self.nn1 = nn.Linear(emb_dim,emb_dim)
+      self.ffn = nn.Sequential(
+          nn.Linear(emb_dim, 4 * emb_dim), nn.ReLU(),
+          nn.Linear(4 * emb_dim, emb_dim),
+      )
+   def forward(self,x):
+      out1 = self.nn1(x)
+      x = x+F.relu(out1)
+      ffn = self.ffn(x)
+      x = x+F.relu(ffn)
+      return x
 class QNetwork(nn.Module):
   def __init__(self,obs_size,action_size,hid_layer=1,start_end_dim=32,emb_dim=64):
     super().__init__()
-    layers = []
-    layers += [nn.Linear(obs_size,start_end_dim), nn.ReLU(),
-               nn.Linear(start_end_dim,emb_dim),nn.ReLU(),]
-    for _ in range(hid_layer-1):
-       layers+=[nn.Linear(emb_dim,emb_dim), nn.ReLU()]
-    layers += [nn.Linear(emb_dim,start_end_dim), nn.ReLU(),
-               nn.Linear(start_end_dim,action_size)]
-    self.feature_layer = nn.Sequential(
-      *layers
+    self.obs_embedding = nn.Linear(obs_size,emb_dim)
+    self.hidden_layers = nn.Sequential(
+       *[
+          HiddenLayer(emb_dim)
+          for _ in range(hid_layer)
+       ]
     )
-    print(layers)
+    self.ffn = nn.Sequential(
+       nn.Linear(emb_dim, emb_dim),nn.ReLU(),
+       nn.Linear(emb_dim, action_size),
+    )
+    self.ffn = nn.Sequential(
+            nn.Linear(emb_dim, emb_dim),nn.ReLU(),
+            nn.Linear(emb_dim, action_size),
+        )
   def forward(self,x):
     batch_size = x.shape[0]   #(bs,12,6)
     x = x.reshape([batch_size,-1])
-    x = self.feature_layer(x)
+    x = self.obs_embedding(x)
+    x = self.hidden_layers(x)
+    x = self.ffn(x)
     return x
 class ReplayBuffer:
   """A simple numpy replay buffer."""

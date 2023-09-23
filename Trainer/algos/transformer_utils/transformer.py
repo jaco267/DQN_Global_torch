@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import numpy as np
 
 def init_weights(module):
-    # print(module,"????")
     if isinstance(module, (nn.Linear, nn.Embedding)):
         module.weight.data.normal_(mean=0.0, std=0.02)
         if isinstance(module, nn.Linear) and module.bias is not None:

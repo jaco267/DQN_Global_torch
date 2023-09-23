@@ -165,7 +165,7 @@ def main_fn(
                 [f"{key}={val}" for key, val in config.items()]
             ),
         else:
-            group = f"{algos_name}_{mode}"
+            group = f"{algos_name}_{mode}_without_pretrain"
         wandb.init(
             project=project_name,
             name = timestamp(),
