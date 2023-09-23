@@ -64,13 +64,31 @@ python VisualizeResults.py
 will generate wirelen images in ./eval/VisualizeResult.      
     
 Compare dqn wire length with A* algorithm (0.75 winning rate) (lower is better)    
-<img src="assets/dqn_WLwithSortedAstar.png" alt= “” width="500px" >
+<img src="assets/WLpretrain.png" alt= “” width="500px" >
 
+
+### Without pretrain model
+Evalutaion with out pretrain model will get similar result, compare with evalutation with pretrain model (~=0.75 winning rate), but will takes a longer time to train.   
+```sh
+# fist delete the pretrain model -->  model/dqn.ckpt
+# train from scratch   
+python run.py --mode "eval" --algos  dtqn --self_play_episode_num 150
+```
+<img src="assets/2023-09-23-21-48-15.png" alt= “” width="800px" > 
+
+#### wire len without pretrain
+
+<img src="assets/WLwithout_pretrain.png" alt= “” width="800px" > 
+
+#### Training  time
+Training time on a Nvidia 3060 GPU    
+- without pretrain 110min
+- pretrain 60min
 
 ### other algorithms
 #### DTQN
 To run [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN), change the algos option through command line.          
-dtqn has similar results compare to dqn.         
+      
 ```sh
 ## pretrain
 python run.py --mode "train" --algos dtqn --run_benchmark_num 30
@@ -78,6 +96,8 @@ python run.py --mode "train" --algos dtqn --run_benchmark_num 30
 python run.py --mode "eval" --algos  dtqn --self_play_episode_num 150
 ```
 ##### DTQN result
+dtqn has similar results compare to dqn.      
+      
 compare dtqn wire length with A* algorithm (0.7 winning rate)
 <img src="assets/dtqn_wirelength.png" alt= “” width="500px" >
 
