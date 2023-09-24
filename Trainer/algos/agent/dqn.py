@@ -35,10 +35,6 @@ class QNetwork(nn.Module):
        ]
     )
     self.ffn = nn.Sequential(
-       nn.Linear(emb_dim, emb_dim),nn.ReLU(),
-       nn.Linear(emb_dim, action_size),
-    )
-    self.ffn = nn.Sequential(
             nn.Linear(emb_dim, emb_dim),nn.ReLU(),
             nn.Linear(emb_dim, action_size),
         )
