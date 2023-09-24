@@ -1,0 +1,16 @@
+algos:         dqn
+wandbName:     ''
+hid_layer:  3
+emb_dim:    64      #  128 is a little too large...
+context_len: 5
+early_stop: False
+result_dir: solutionsDRL
+mode: train
+load_ckpt: True
+save_ckpt: True
+self_play_episode_num: 4
+run_benchmark_num: 30
+enable_wandb: True
+data_folder:  train_data_/benchmark_reduced
+verbose: False
+rainbow_mode: ['double','nstep']

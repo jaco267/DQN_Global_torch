@@ -1,1 +1,1 @@
-from Trainer import Router
+from . import Router

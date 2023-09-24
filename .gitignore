@@ -6,3 +6,4 @@ solutionsDRL*/
 test_data_/*
 wandb/*
 private/*
+archive/**

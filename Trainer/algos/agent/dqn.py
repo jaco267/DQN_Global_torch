@@ -24,8 +24,9 @@ class HiddenLayer(nn.Module):
       ffn = self.ffn(x)
       x = x+F.relu(ffn)
       return x
+
 class QNetwork(nn.Module):
-  def __init__(self,obs_size,action_size,hid_layer=1,start_end_dim=32,emb_dim=64):
+  def __init__(self,obs_size,action_size,hid_layer=3,start_end_dim=32,emb_dim=64):
     super().__init__()
     self.obs_embedding = nn.Linear(obs_size,emb_dim)
     self.hidden_layers = nn.Sequential(
@@ -34,6 +35,13 @@ class QNetwork(nn.Module):
           for _ in range(hid_layer)
        ]
     )
+    if hid_layer == 0:
+       #*** original implementation only used 3 layers  
+       #https://github.com/haiguanl/DQN_GlobalRouting/blob/master/GlobalRoutingRL/DQN_Implementation.py
+       self.hidden_layers = nn.Sequential(
+             nn.Linear(emb_dim, emb_dim),nn.ReLU(),
+             nn.Linear(emb_dim, emb_dim),nn.ReLU(),
+       )
     self.ffn = nn.Sequential(
             nn.Linear(emb_dim, emb_dim),nn.ReLU(),
             nn.Linear(emb_dim, action_size),
@@ -79,7 +87,6 @@ class ReplayBuffer:
     return self.size
 class DQN_Agent(): 
     def __init__(self, gridgraph,hid_layer=1,emb_dim=64,self_play_episode_num=150,context_len=5):
-      print("----DQN_agenthaha---")
         # as well as training parameters - number of episodes / iterations, etc.
       self.env = gridgraph
       self.action_size = self.env.action_size  #6

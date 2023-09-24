@@ -114,58 +114,69 @@ class Print_log:
     def log(self,item):
         # print(item)
         pass
-def main_fn(
-        algos="dtqn",
-        mode="train",  #train, eval
-        hid_layer=1, emb_dim=64,
-        context_len = 5,   #try other numbers 1~30,  I known 50 is bad and slow
-        early_stop=False,
-        result_dir = "solutionsDRL",
-        save_ckpt=True,load_ckpt=True,
-        self_play_episode_num = 150,    
-        enable_wandb=True, wandbName="",    
-        data_folder='train_data_/benchmark_reduced',
-        run_benchmark_num = None,
-        verbose = False,
-        rainbow_mode = ['double','nstep']#['double','duel','noisy','per','cat','nstep']
-    ):  
+from dataclasses import dataclass
+import pyrallis
+from pyrallis import field
+from typing import List
+@dataclass
+class TrainConfig:
+    """ Training config for Machine Learning """
+    algos:str="dqn"
+    mode:str="train"  #train, eval
+    hid_layer:int=1 
+    emb_dim:int=64
+    context_len:int = 5   #try other numbers 1~30,  I known 50 is bad and slow
+    early_stop:bool=False
+    result_dir:str = "solutionsDRL"
+    save_ckpt:bool=True
+    load_ckpt:bool=True
+    self_play_episode_num:int = 150    
+    enable_wandb:bool=True 
+    wandbName:str=""    
+    data_folder:str='train_data_/benchmark_reduced'
+    run_benchmark_num:int = -1
+    verbose:bool = False
+    rainbow_mode:List[str] = field(default=['double','nstep'], is_mutable=True)
+    #['double','duel','noisy','per','cat','nstep']
+#!! python Router.py --config_path test.yaml
+@pyrallis.wrap(config_path='./train.yaml')
+def main_fn(cfg:TrainConfig ):  
     '''
     [double] is nice (20/20),  
     In the current setting [duel, noisy] are bad, 
     todo : save replay ckpt when training (this will influence the beta update of PER)
     #[double] at train and [double,per] at eval is still bad 
     '''
-    
     print(">>>>>>>>>>>>>>>\n",locals())
-    algos_name = algos
+    algos_name = cfg.algos
     rain_dict = {}
-    if 'rainbow' in algos:
+    if 'rainbow' in cfg.algos:
         stardard_rainbow_list = ['double','duel','noisy','per','cat','nstep']
         for r_mode in stardard_rainbow_list:
-            if r_mode in rainbow_mode:
+            if r_mode in cfg.rainbow_mode:
                 rain_dict[r_mode] = True
                 algos_name+= f'_{r_mode}' 
             else:
                 rain_dict[r_mode] = False
         print('rainbow_mode--->',rain_dict)
         print('algos_name--->',algos_name)
-    if enable_wandb:
+    if cfg.enable_wandb:
         wandb.login()
         project_name = "Global_route"
         config={
                 "algos":algos_name,
-                "mode":mode,
-                "layer":hid_layer,
-                "emb_dim":emb_dim,
-                "episode":self_play_episode_num,
-                "context_len":context_len,
+                "mode":cfg.mode,
+                "layer":cfg.hid_layer,
+                "emb_dim":cfg.emb_dim,
+                "episode":cfg.self_play_episode_num,
+                "context_len":cfg.context_len,
         }
-        if verbose:
-            group = wandbName+"_"+"_".join(
+        if cfg.verbose:
+            group = cfg.wandbName+"_"+"_".join(
                 [f"{key}={val}" for key, val in config.items()]
             ),
         else:
-            group = f"{algos_name}_{mode}_depth111"
+            group = f"{algos_name}_{cfg.mode}_{cfg.wandbName}"
         wandb.init(
             project=project_name,
             name = timestamp(),
@@ -176,39 +187,39 @@ def main_fn(
     else:
         print("disable wandb")
         logger = Print_log()
-    print(self_play_episode_num,result_dir)
-    os.system(f'rm -r {result_dir}');    os.makedirs(result_dir);    
-    benchmark_reduced_path = data_folder
+    print(cfg.self_play_episode_num,cfg.result_dir)
+    os.system(f'rm -r {cfg.result_dir}');    os.makedirs(cfg.result_dir);    
+    benchmark_reduced_path = cfg.data_folder
     src_benchmark_file = [li for li in os.listdir(benchmark_reduced_path) if "rewardData" not in li]
     #*  ex. test_benchmark_1.gr,  test_benchmark_2.gr .....
     success_count = 0
     
     env = GridGraphV2.GridGraph 
-    algos_fn = importlib.import_module(f'Trainer.algos.agent.{algos}')
+    algos_fn = importlib.import_module(f'Trainer.algos.agent.{cfg.algos}')
     print(algos_fn.__name__,"...algos module name...")
 
-    if run_benchmark_num == None:
-        run_benchmark_num = len(src_benchmark_file)
-    run_benchmark_num = min(run_benchmark_num,len(src_benchmark_file))
-    for i in range(run_benchmark_num):
+    if cfg.run_benchmark_num < 0:
+        cfg.run_benchmark_num = len(src_benchmark_file)
+    cfg.run_benchmark_num = min(cfg.run_benchmark_num,len(src_benchmark_file))
+    for i in range(cfg.run_benchmark_num):
         #benchmark_reduced/test_benchmark_1.gr
         read_file_name = f"{benchmark_reduced_path}/test_benchmark_{i+1}.gr"  
-        print (f'\n********{i+1}/{run_benchmark_num}******Working on {read_file_name}****************')
+        print (f'\n********{i+1}/{cfg.run_benchmark_num}******Working on {read_file_name}****************')
         success = train_one_epoch(read_file_name,
                          env,     
                          algos_fn, 
-                         algos_name=algos,
-                         hid_layer=hid_layer,
+                         algos_name=cfg.algos,
+                         hid_layer=cfg.hid_layer,
                          globali=i,
-                         self_play_episode_num=self_play_episode_num,
-                         result_dir=result_dir,
+                         self_play_episode_num=cfg.self_play_episode_num,
+                         result_dir=cfg.result_dir,
                          logger=logger,
-                         save_ckpt=save_ckpt,
+                         save_ckpt=cfg.save_ckpt,
                          ckpt_folder = "./model/",
-                         early_stop=early_stop,
-                         load_ckpt=load_ckpt,
-                         emb_dim=emb_dim,
-                         context_len=context_len,
+                         early_stop=cfg.early_stop,
+                         load_ckpt=cfg.load_ckpt,
+                         emb_dim=cfg.emb_dim,
+                         context_len=cfg.context_len,
                          rainbow_mode=rain_dict)
         success_count+=success
         logger.log({'success_count':success_count})
@@ -216,6 +227,7 @@ def main_fn(
 
 
 
-
+if __name__ == '__main__':
+   main_fn()
 
 

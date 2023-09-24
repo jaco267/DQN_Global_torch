@@ -5,3 +5,4 @@ pandas==1.2.4
 PyYAML==6.0
 scipy==1.8.0
 torch==2.0.0
+pyrallis==0.3.1

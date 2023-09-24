@@ -43,13 +43,13 @@ command line (or yaml) args
 - enable_wandb:bool=True -> use wandb for plotting
 - data_folder:str -> netlist data to solve
 ```sh
-python run.py --mode "train" --algos dqn --run_benchmark_num 30
+python main.py --config_path train.yaml --wandbName demo
 ```
 ## Step3. start eval
 eval run the 20 test benchmark, each with 150 self-play number (in configs.yaml),
-eval will take longer time to run (about 2hr on a RTX3060 GPU)
+eval will take longer time to run (about 1hr on a RTX3060 GPU)
 ```sh
-python run.py --mode "eval" --algos dqn --self_play_episode_num 150
+python main.py --config_path test.yaml --wandbName demo
 ```
 
 ## Step4. Go to wandb site to check the result
@@ -72,8 +72,9 @@ Compare dqn wire length with A* algorithm (0.75 winning rate) (lower is better)
 Evalutaion with out pretrain model will get similar result, compare with evalutation with pretrain model (~=0.75 winning rate), but will takes a longer time to train.   
 ```sh
 # fist delete the pretrain model -->  model/dqn.ckpt
-# train from scratch   
-python run.py --mode "eval" --algos  dtqn --self_play_episode_num 150
+rm model/dqn.ckpt
+# train from scratch in eval stage
+python main.py --config_path test.yaml --wandbName without_pretrain
 ```
 <img src="assets/2023-09-23-21-48-15.png" alt= “” width="800px" > 
 
@@ -86,15 +87,30 @@ Training time on a Nvidia 3060 GPU
 - without pretrain 110min
 - pretrain 60min
 
+#### Network depth
+The success rate increase if we use deeper network.
+```sh
+### original implementation dont use res block
+python main.py --config_path train.yaml --wandbName original_3_layer   --hid_layer 0
+python main.py --config_path test.yaml  --wandbName original_3_layer   --self_play_episode_num 50 --hid_layer 0
+#  first delete ckpt in model/dqn.ckpt
+rm ./model/dqn.ckpt
+### 3 resblock  agent
+python main.py --config_path test.yaml --hid_layer 3  --wandbName _3_resblock_10_layer
+python main.py --config_path test.yaml --self_play_episode_num 50 --hid_layer 3 --wandbName _3_resblock_10_layer
+```
+<img src="assets/2023-09-24-15-16-00.png" alt= “” width="800px" >
+
+
 ### other algorithms
 #### DTQN
 To run [Deep Transformer Q-Networks ](https://github.com/kevslinger/DTQN), change the algos option through command line.          
       
 ```sh
 ## pretrain
-python run.py --mode "train" --algos dtqn --run_benchmark_num 30
+python main.py --config_path train.yaml --algos dtqn --run_benchmark_num 30
 ## eval
-python run.py --mode "eval" --algos  dtqn --self_play_episode_num 150
+python main.py --config_path test.yaml  --algos dtqn --self_play_episode_num 150
 ```
 ##### DTQN result
 dtqn has similar results compare to dqn.      
