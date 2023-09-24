@@ -3,7 +3,7 @@ In this repo, I  reimplement [dqn global routing](https://github.com/haiguanl/DQ
 
 ### Differences from original implementation
 - deeper network   
-The [original implementation](https://github.com/haiguanl/DQN_GlobalRouting/blob/master/GlobalRoutingRL/DQN_Implementation.py) uses only three hidden layers, this implementation uses a deeper architecture similar to resnet  (in Trainer/algos/agent/dqn.py) for better performance.    
+The [original implementation](https://github.com/haiguanl/DQN_GlobalRouting/blob/master/GlobalRoutingRL/DQN_Implementation.py) uses only three hidden layers, this implementation uses a deeper architecture similar to resnet  (in [Trainer/algos/agent/dqn.py](https://github.com/jaco267/DQN_Global_torch/blob/main/Trainer/algos/agent/dqn.py)) for better performance.    
 - remove memory burn-in     
 The original implemenation used A* memory burn-in to make the training faster, this implementation didn't used memory burn-in, but can still achieve 0.75  wire-length winning rate against A* algorithm. (with the help of deeper network) 
 - pretrain stage
@@ -23,6 +23,7 @@ python gen_data.py --benchmarkNumber 30 --gridSize 8 --netNum 20 --vCap 4  --hCa
 # test data
 python gen_data.py --benchmarkNumber 20 --gridSize 8 --netNum 20 --vCap 4  --hCap 4 --maxPinNum 5 --reducedCapNum 3 --prefix ./test_data_/
 ```       
+
 ## Step2. start training 
 default options is in configs.yaml (or Trainer/Router.py main_fn), you can modify it in yaml or overwrite it through command line interface
 
