@@ -96,7 +96,7 @@ python main.py --config_path test.yaml  --wandbName original_3_layer   --self_pl
 #  first delete ckpt in model/dqn.ckpt
 rm ./model/dqn.ckpt
 ### 3 resblock  agent
-python main.py --config_path test.yaml --hid_layer 3  --wandbName _3_resblock_10_layer
+python main.py --config_path train.yaml --hid_layer 3  --wandbName _3_resblock_10_layer
 python main.py --config_path test.yaml --self_play_episode_num 50 --hid_layer 3 --wandbName _3_resblock_10_layer
 ```
 <img src="assets/2023-09-24-15-16-00.png" alt= “” width="800px" >
